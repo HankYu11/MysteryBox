@@ -30,10 +30,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.CreateBoxRequest
+import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.repository.MerchantRepository
-import com.example.mysterybox.data.repository.Result
 import com.example.mysterybox.ui.theme.*
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +53,7 @@ fun UploadBoxScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
-    val repository = remember { MerchantRepository.getInstance() }
+    val repository: MerchantRepository = koinInject()
 
     Scaffold(
         topBar = {
