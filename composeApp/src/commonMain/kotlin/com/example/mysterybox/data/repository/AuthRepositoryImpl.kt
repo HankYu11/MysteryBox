@@ -89,11 +89,4 @@ class AuthRepositoryImpl(
         storedState = state
     }
 
-    companion object {
-        private var instance: AuthRepositoryImpl? = null
-
-        fun getInstance(httpClient: HttpClient): AuthRepositoryImpl {
-            return instance ?: AuthRepositoryImpl(httpClient).also { instance = it }
-        }
-    }
 }
