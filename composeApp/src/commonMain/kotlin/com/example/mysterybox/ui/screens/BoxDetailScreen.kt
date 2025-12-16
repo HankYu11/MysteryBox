@@ -22,10 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mysterybox.data.SampleData
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.viewmodel.BoxViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +35,14 @@ fun BoxDetailScreen(
     onBackClick: () -> Unit,
     onReserveClick: (MysteryBox) -> Unit
 ) {
-    val box = SampleData.mysteryBoxes.find { it.id == boxId } ?: return
+    val viewModel: BoxViewModel = koinViewModel()
+    val selectedBox by viewModel.selectedBox.collectAsState()
+
+    LaunchedEffect(boxId) {
+        viewModel.loadBoxDetail(boxId)
+    }
+
+    val box = selectedBox ?: return
 
     Scaffold(
         topBar = {

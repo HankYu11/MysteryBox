@@ -27,10 +27,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mysterybox.data.SampleData
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.viewmodel.BoxFilter
+import com.example.mysterybox.ui.viewmodel.BoxViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
@@ -38,7 +40,16 @@ fun HomeScreen(
     onNavigateToReservations: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    val viewModel: BoxViewModel = koinViewModel()
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val boxes by viewModel.boxes.collectAsState()
+
+    val selectedTab = when (selectedFilter) {
+        BoxFilter.ALL -> 0
+        BoxFilter.AVAILABLE -> 1
+        BoxFilter.ALMOST_SOLD_OUT -> 2
+        BoxFilter.SOLD_OUT -> 3
+    }
     val tabs = listOf("全部", "可預約", "即將售罄", "已售完")
 
     Scaffold(
@@ -93,7 +104,16 @@ fun HomeScreen(
                 tabs.forEachIndexed { index, tab ->
                     FilterChip(
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        onClick = {
+                            val filter = when (index) {
+                                0 -> BoxFilter.ALL
+                                1 -> BoxFilter.AVAILABLE
+                                2 -> BoxFilter.ALMOST_SOLD_OUT
+                                3 -> BoxFilter.SOLD_OUT
+                                else -> BoxFilter.ALL
+                            }
+                            viewModel.setFilter(filter)
+                        },
                         label = { Text(tab, fontSize = 14.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Green500,
@@ -145,12 +165,7 @@ fun HomeScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val filteredBoxes = when (selectedTab) {
-                    1 -> SampleData.mysteryBoxes.filter { it.status == BoxStatus.AVAILABLE }
-                    2 -> SampleData.mysteryBoxes.filter { it.status == BoxStatus.ALMOST_SOLD_OUT }
-                    3 -> SampleData.mysteryBoxes.filter { it.status == BoxStatus.SOLD_OUT }
-                    else -> SampleData.mysteryBoxes
-                }
+                val filteredBoxes = viewModel.getFilteredBoxes()
 
                 items(filteredBoxes) { box ->
                     MysteryBoxCard(
