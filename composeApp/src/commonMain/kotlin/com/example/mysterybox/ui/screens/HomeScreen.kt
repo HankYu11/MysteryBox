@@ -45,10 +45,8 @@ fun HomeScreen(
         bottomBar = {
             BottomNavigationBar(
                 selectedIndex = 0,
-                onHomeClick = { },
-                onSearchClick = { },
                 onBoxClick = { },
-                onReservationsClick = onNavigateToReservations,
+                onOrdersClick = onNavigateToReservations,
                 onProfileClick = onNavigateToProfile
             )
         }
@@ -358,10 +356,8 @@ fun MysteryBoxCard(
 @Composable
 fun BottomNavigationBar(
     selectedIndex: Int,
-    onHomeClick: () -> Unit,
-    onSearchClick: () -> Unit,
     onBoxClick: () -> Unit,
-    onReservationsClick: () -> Unit,
+    onOrdersClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
     NavigationBar(
@@ -370,45 +366,13 @@ fun BottomNavigationBar(
     ) {
         NavigationBarItem(
             selected = selectedIndex == 0,
-            onClick = onHomeClick,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "首頁"
-                )
-            },
-            label = { Text("首頁", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Green500,
-                selectedTextColor = Green500,
-                indicatorColor = Green50
-            )
-        )
-        NavigationBarItem(
-            selected = selectedIndex == 1,
-            onClick = onSearchClick,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "搜尋"
-                )
-            },
-            label = { Text("搜尋", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Green500,
-                selectedTextColor = Green500,
-                indicatorColor = Green50
-            )
-        )
-        NavigationBarItem(
-            selected = selectedIndex == 2,
             onClick = onBoxClick,
             icon = {
                 Box(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(if (selectedIndex == 2) Green500 else Gray400),
+                        .background(if (selectedIndex == 0) Green500 else Gray400),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -427,15 +391,15 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
-            selected = selectedIndex == 3,
-            onClick = onReservationsClick,
+            selected = selectedIndex == 1,
+            onClick = onOrdersClick,
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.DateRange,
-                    contentDescription = "我的預約"
+                    contentDescription = "訂單"
                 )
             },
-            label = { Text("我的預約", fontSize = 11.sp) },
+            label = { Text("訂單", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Green500,
                 selectedTextColor = Green500,
@@ -443,15 +407,15 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
-            selected = selectedIndex == 4,
+            selected = selectedIndex == 2,
             onClick = onProfileClick,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "個人檔案"
+                    contentDescription = "會員"
                 )
             },
-            label = { Text("個人檔案", fontSize = 11.sp) },
+            label = { Text("會員", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Green500,
                 selectedTextColor = Green500,

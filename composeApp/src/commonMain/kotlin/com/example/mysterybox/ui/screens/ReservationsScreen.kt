@@ -66,11 +66,9 @@ fun ReservationsScreen(
         },
         bottomBar = {
             BottomNavigationBar(
-                selectedIndex = 3,
-                onHomeClick = onNavigateToHome,
-                onSearchClick = { },
-                onBoxClick = { },
-                onReservationsClick = { },
+                selectedIndex = 1,
+                onBoxClick = onNavigateToHome,
+                onOrdersClick = { },
                 onProfileClick = onNavigateToProfile
             )
         }
