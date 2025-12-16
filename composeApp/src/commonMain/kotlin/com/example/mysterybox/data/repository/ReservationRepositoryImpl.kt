@@ -6,27 +6,27 @@ import com.example.mysterybox.data.model.Reservation
 import com.example.mysterybox.data.model.ReservationStatus
 import com.example.mysterybox.data.model.Result
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ReservationRepositoryImpl : ReservationRepository {
 
-    private val _reservations = MutableStateFlow<List<Reservation>>(emptyList())
+    // In-memory storage for mock - will be replaced with API calls
+    private val mockReservations = SampleData.reservations.toMutableList()
     private var reservationCounter = 100
 
-    init {
-        // Initialize with sample data - will be replaced with API call
-        _reservations.value = SampleData.reservations
-    }
+    override suspend fun getReservations(): Result<List<Reservation>> {
+        // Simulate network delay - will be replaced with API call
+        delay(100)
 
-    override fun getReservations(): Flow<List<Reservation>> = _reservations.asStateFlow()
+        // TODO: Replace with actual API call
+        return Result.Success(mockReservations.toList())
+    }
 
     override suspend fun getReservationById(id: String): Result<Reservation> {
         // Simulate network delay - will be replaced with API call
         delay(100)
 
-        val reservation = _reservations.value.find { it.id == id }
+        // TODO: Replace with actual API call
+        val reservation = mockReservations.find { it.id == id }
         return if (reservation != null) {
             Result.Success(reservation)
         } else {
@@ -38,6 +38,7 @@ class ReservationRepositoryImpl : ReservationRepository {
         // Simulate network delay - will be replaced with API call
         delay(500)
 
+        // TODO: Replace with actual API call
         val newReservation = Reservation(
             id = "r${++reservationCounter}",
             orderId = "#${8800 + reservationCounter}",
@@ -49,7 +50,7 @@ class ReservationRepositoryImpl : ReservationRepository {
             price = box.discountedPrice
         )
 
-        _reservations.value = _reservations.value + newReservation
+        mockReservations.add(newReservation)
         return Result.Success(newReservation)
     }
 
@@ -57,20 +58,13 @@ class ReservationRepositoryImpl : ReservationRepository {
         // Simulate network delay - will be replaced with API call
         delay(300)
 
-        val reservation = _reservations.value.find { it.id == id }
-        return if (reservation != null) {
-            _reservations.value = _reservations.value.filter { it.id != id }
+        // TODO: Replace with actual API call
+        val index = mockReservations.indexOfFirst { it.id == id }
+        return if (index >= 0) {
+            mockReservations.removeAt(index)
             Result.Success(Unit)
         } else {
             Result.Error("Reservation not found")
         }
-    }
-
-    override suspend fun refreshReservations() {
-        // Simulate network delay - will be replaced with API call
-        delay(500)
-
-        // For now, keep current state
-        // TODO: Replace with actual API call
     }
 }

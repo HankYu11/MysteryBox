@@ -7,18 +7,16 @@ import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.repository.BoxRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class BoxViewModel(
     private val boxRepository: BoxRepository
 ) : ViewModel() {
 
-    val boxes: StateFlow<List<MysteryBox>> = boxRepository.getBoxes()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _boxes = MutableStateFlow<List<MysteryBox>>(emptyList())
+    val boxes: StateFlow<List<MysteryBox>> = _boxes.asStateFlow()
 
     private val _selectedBox = MutableStateFlow<MysteryBox?>(null)
     val selectedBox: StateFlow<MysteryBox?> = _selectedBox.asStateFlow()
@@ -29,10 +27,17 @@ class BoxViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    fun refreshBoxes() {
+    init {
+        loadBoxes()
+    }
+
+    fun loadBoxes() {
         viewModelScope.launch {
             _isLoading.value = true
-            boxRepository.refreshBoxes()
+            when (val result = boxRepository.getBoxes()) {
+                is Result.Success -> _boxes.value = result.data
+                is Result.Error -> _boxes.value = emptyList()
+            }
             _isLoading.value = false
         }
     }
