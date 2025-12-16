@@ -1,17 +1,24 @@
 package com.example.mysterybox.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.mysterybox.data.SampleData
+import androidx.lifecycle.viewModelScope
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
+import com.example.mysterybox.data.model.Result
+import com.example.mysterybox.data.repository.BoxRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class BoxViewModel : ViewModel() {
+class BoxViewModel(
+    private val boxRepository: BoxRepository
+) : ViewModel() {
 
-    private val _boxes = MutableStateFlow<List<MysteryBox>>(emptyList())
-    val boxes: StateFlow<List<MysteryBox>> = _boxes.asStateFlow()
+    val boxes: StateFlow<List<MysteryBox>> = boxRepository.getBoxes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedBox = MutableStateFlow<MysteryBox?>(null)
     val selectedBox: StateFlow<MysteryBox?> = _selectedBox.asStateFlow()
@@ -19,12 +26,15 @@ class BoxViewModel : ViewModel() {
     private val _selectedFilter = MutableStateFlow(BoxFilter.ALL)
     val selectedFilter: StateFlow<BoxFilter> = _selectedFilter.asStateFlow()
 
-    init {
-        loadBoxes()
-    }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    fun loadBoxes() {
-        _boxes.value = SampleData.mysteryBoxes
+    fun refreshBoxes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            boxRepository.refreshBoxes()
+            _isLoading.value = false
+        }
     }
 
     fun setFilter(filter: BoxFilter) {
@@ -33,15 +43,20 @@ class BoxViewModel : ViewModel() {
 
     fun getFilteredBoxes(): List<MysteryBox> {
         return when (_selectedFilter.value) {
-            BoxFilter.ALL -> _boxes.value
-            BoxFilter.AVAILABLE -> _boxes.value.filter { it.status == BoxStatus.AVAILABLE }
-            BoxFilter.ALMOST_SOLD_OUT -> _boxes.value.filter { it.status == BoxStatus.ALMOST_SOLD_OUT }
-            BoxFilter.SOLD_OUT -> _boxes.value.filter { it.status == BoxStatus.SOLD_OUT }
+            BoxFilter.ALL -> boxes.value
+            BoxFilter.AVAILABLE -> boxes.value.filter { it.status == BoxStatus.AVAILABLE }
+            BoxFilter.ALMOST_SOLD_OUT -> boxes.value.filter { it.status == BoxStatus.ALMOST_SOLD_OUT }
+            BoxFilter.SOLD_OUT -> boxes.value.filter { it.status == BoxStatus.SOLD_OUT }
         }
     }
 
     fun loadBoxDetail(boxId: String) {
-        _selectedBox.value = _boxes.value.find { it.id == boxId }
+        viewModelScope.launch {
+            when (val result = boxRepository.getBoxById(boxId)) {
+                is Result.Success -> _selectedBox.value = result.data
+                is Result.Error -> _selectedBox.value = null
+            }
+        }
     }
 
     fun clearSelectedBox() {

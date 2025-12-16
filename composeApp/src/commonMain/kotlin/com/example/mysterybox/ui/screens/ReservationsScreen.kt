@@ -27,20 +27,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mysterybox.data.SampleData
 import com.example.mysterybox.data.model.Reservation
 import com.example.mysterybox.data.model.ReservationStatus
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.viewmodel.ReservationViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationsScreen(
     onBackClick: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    viewModel: ReservationViewModel = koinViewModel()
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("進行中", "歷史紀錄")
+    val reservations by viewModel.reservations.collectAsState()
 
     Scaffold(
         topBar = {
@@ -114,15 +117,9 @@ fun ReservationsScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 val filteredReservations = if (selectedTab == 0) {
-                    SampleData.reservations.filter {
-                        it.status != ReservationStatus.COMPLETED &&
-                        it.status != ReservationStatus.CANCELLED
-                    }
+                    viewModel.getActiveReservations()
                 } else {
-                    SampleData.reservations.filter {
-                        it.status == ReservationStatus.COMPLETED ||
-                        it.status == ReservationStatus.CANCELLED
-                    }
+                    viewModel.getPastReservations()
                 }
 
                 items(filteredReservations) { reservation ->
