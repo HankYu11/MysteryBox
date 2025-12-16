@@ -39,5 +39,8 @@ actual fun generateSecureState(): String {
     bytes.usePinned { pinned ->
         SecRandomCopyBytes(kSecRandomDefault, bytes.size.toULong(), pinned.addressOf(0))
     }
-    return bytes.joinToString("") { "%02x".format(it) }
+    return bytes.joinToString("") { byte ->
+        val hex = (byte.toInt() and 0xFF).toString(16)
+        if (hex.length == 1) "0$hex" else hex
+    }
 }
