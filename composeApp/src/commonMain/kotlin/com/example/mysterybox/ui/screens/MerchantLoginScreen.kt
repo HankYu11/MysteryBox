@@ -34,13 +34,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MerchantLoginScreen(
     onBackClick: () -> Unit,
     onLoginSuccess: () -> Unit,
-    onApplyClick: () -> Unit
+    onApplyClick: () -> Unit,
+    viewModel: MerchantViewModel = koinViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val viewModel: MerchantViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
 
     val isLoading = uiState is MerchantUiState.Loading

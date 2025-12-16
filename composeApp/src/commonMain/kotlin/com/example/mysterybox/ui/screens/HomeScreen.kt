@@ -38,9 +38,9 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     onBoxClick: (String) -> Unit,
     onNavigateToReservations: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    viewModel: BoxViewModel = koinViewModel()
 ) {
-    val viewModel: BoxViewModel = koinViewModel()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val boxes by viewModel.boxes.collectAsState()
 

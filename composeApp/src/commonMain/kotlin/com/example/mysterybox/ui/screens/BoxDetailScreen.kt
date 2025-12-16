@@ -33,9 +33,9 @@ import org.koin.compose.viewmodel.koinViewModel
 fun BoxDetailScreen(
     boxId: String,
     onBackClick: () -> Unit,
-    onReserveClick: (MysteryBox) -> Unit
+    onReserveClick: (MysteryBox) -> Unit,
+    viewModel: BoxViewModel = koinViewModel()
 ) {
-    val viewModel: BoxViewModel = koinViewModel()
     val selectedBox by viewModel.selectedBox.collectAsState()
 
     LaunchedEffect(boxId) {

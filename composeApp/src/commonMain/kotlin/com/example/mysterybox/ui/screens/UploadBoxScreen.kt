@@ -39,7 +39,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun UploadBoxScreen(
     onBackClick: () -> Unit,
-    onUploadSuccess: () -> Unit
+    onUploadSuccess: () -> Unit,
+    viewModel: MerchantViewModel = koinViewModel()
 ) {
     var boxName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -49,7 +50,6 @@ fun UploadBoxScreen(
     var quantity by remember { mutableStateOf(5) }
     var saleTime by remember { mutableStateOf("今天, 18:00") }
 
-    val viewModel: MerchantViewModel = koinViewModel()
     val createBoxState by viewModel.createBoxState.collectAsState()
 
     val isLoading = createBoxState is CreateBoxUiState.Loading
