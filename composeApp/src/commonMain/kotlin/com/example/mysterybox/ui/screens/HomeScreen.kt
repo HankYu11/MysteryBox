@@ -42,7 +42,7 @@ fun HomeScreen(
     viewModel: BoxViewModel = koinViewModel()
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsState()
-    val boxes by viewModel.boxes.collectAsState()
+    val filteredBoxes by viewModel.filteredBoxes.collectAsState()
 
     val selectedTab = when (selectedFilter) {
         BoxFilter.ALL -> 0
@@ -165,8 +165,6 @@ fun HomeScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val filteredBoxes = viewModel.getFilteredBoxes()
-
                 items(filteredBoxes) { box ->
                     MysteryBoxCard(
                         box = box,

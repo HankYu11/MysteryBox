@@ -7,8 +7,11 @@ import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.repository.BoxRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class BoxViewModel(
@@ -27,6 +30,15 @@ class BoxViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    val filteredBoxes: StateFlow<List<MysteryBox>> = combine(_boxes, _selectedFilter) { boxes, filter ->
+        when (filter) {
+            BoxFilter.ALL -> boxes
+            BoxFilter.AVAILABLE -> boxes.filter { it.status == BoxStatus.AVAILABLE }
+            BoxFilter.ALMOST_SOLD_OUT -> boxes.filter { it.status == BoxStatus.ALMOST_SOLD_OUT }
+            BoxFilter.SOLD_OUT -> boxes.filter { it.status == BoxStatus.SOLD_OUT }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
         loadBoxes()
     }
@@ -44,15 +56,6 @@ class BoxViewModel(
 
     fun setFilter(filter: BoxFilter) {
         _selectedFilter.value = filter
-    }
-
-    fun getFilteredBoxes(): List<MysteryBox> {
-        return when (_selectedFilter.value) {
-            BoxFilter.ALL -> boxes.value
-            BoxFilter.AVAILABLE -> boxes.value.filter { it.status == BoxStatus.AVAILABLE }
-            BoxFilter.ALMOST_SOLD_OUT -> boxes.value.filter { it.status == BoxStatus.ALMOST_SOLD_OUT }
-            BoxFilter.SOLD_OUT -> boxes.value.filter { it.status == BoxStatus.SOLD_OUT }
-        }
     }
 
     fun loadBoxDetail(boxId: String) {
