@@ -2,21 +2,57 @@ package com.example.mysterybox
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.mysterybox.data.model.AuthState
+import com.example.mysterybox.data.model.OAuthCallbackResult
+import com.example.mysterybox.data.network.createHttpClient
+import com.example.mysterybox.data.repository.AuthRepositoryImpl
 import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
 import com.example.mysterybox.ui.theme.MysteryBoxTheme
+import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
-fun App() {
+fun App(
+    oauthCallback: OAuthCallbackResult? = null,
+    onOAuthCallbackHandled: () -> Unit = {}
+) {
     MysteryBoxTheme {
         val navController = rememberNavController()
+
+        // Create dependencies
+        val httpClient = remember { createHttpClient() }
+        val authRepository = remember { AuthRepositoryImpl.getInstance(httpClient) }
+        val authViewModel = remember { AuthViewModel(authRepository) }
+
+        val authState by authViewModel.authState.collectAsState()
+
+        // Handle OAuth callback
+        LaunchedEffect(oauthCallback) {
+            oauthCallback?.let { callback ->
+                authViewModel.handleOAuthCallback(callback)
+                onOAuthCallbackHandled()
+            }
+        }
+
+        // Navigate on successful auth
+        LaunchedEffect(authState) {
+            if (authState is AuthState.Authenticated) {
+                navController.navigate(Home) {
+                    popUpTo(Welcome) { inclusive = true }
+                }
+            }
+        }
 
         NavHost(
             navController = navController,
@@ -33,10 +69,9 @@ fun App() {
 
             composable<Login> {
                 LoginScreen(
+                    authState = authState,
                     onLoginClick = {
-                        navController.navigate(Home) {
-                            popUpTo(Welcome) { inclusive = true }
-                        }
+                        authViewModel.startLineLogin()
                     },
                     onSkipClick = {
                         navController.navigate(Home) {
