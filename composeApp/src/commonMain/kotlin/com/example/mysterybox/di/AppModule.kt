@@ -6,6 +6,7 @@ import com.example.mysterybox.data.repository.AuthRepositoryImpl
 import com.example.mysterybox.data.repository.MerchantRepository
 import com.example.mysterybox.data.repository.MerchantRepositoryImpl
 import com.example.mysterybox.ui.viewmodel.AuthViewModel
+import com.example.mysterybox.ui.viewmodel.MerchantViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -22,6 +23,7 @@ val repositoryModule = module {
 
 val viewModelModule = module {
     viewModelOf(::AuthViewModel)
+    viewModelOf(::MerchantViewModel)
 }
 
 val appModules = listOf(

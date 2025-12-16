@@ -24,12 +24,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mysterybox.data.model.MerchantLoginRequest
-import com.example.mysterybox.data.model.Result
-import com.example.mysterybox.data.repository.MerchantRepository
 import com.example.mysterybox.ui.theme.*
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import com.example.mysterybox.ui.viewmodel.MerchantUiState
+import com.example.mysterybox.ui.viewmodel.MerchantViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,11 +39,18 @@ fun MerchantLoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val scope = rememberCoroutineScope()
-    val repository: MerchantRepository = koinInject()
+    val viewModel: MerchantViewModel = koinViewModel()
+    val uiState by viewModel.uiState.collectAsState()
+
+    val isLoading = uiState is MerchantUiState.Loading
+    val errorMessage = (uiState as? MerchantUiState.Error)?.message
+
+    LaunchedEffect(uiState) {
+        if (uiState is MerchantUiState.LoggedIn) {
+            onLoginSuccess()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -184,7 +189,7 @@ fun MerchantLoginScreen(
                     value = email,
                     onValueChange = {
                         email = it
-                        errorMessage = null
+                        viewModel.clearError()
                     },
                     placeholder = {
                         Text(
@@ -241,7 +246,7 @@ fun MerchantLoginScreen(
                     value = password,
                     onValueChange = {
                         password = it
-                        errorMessage = null
+                        viewModel.clearError()
                     },
                     placeholder = {
                         Text(
@@ -296,18 +301,7 @@ fun MerchantLoginScreen(
             // Login Button
             Button(
                 onClick = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val result = repository.login(
-                            MerchantLoginRequest(email, password)
-                        )
-                        isLoading = false
-                        when (result) {
-                            is Result.Success -> onLoginSuccess()
-                            is Result.Error -> errorMessage = result.message
-                        }
-                    }
+                    viewModel.login(email, password)
                 },
                 enabled = email.isNotBlank() && password.isNotBlank() && !isLoading,
                 modifier = Modifier

@@ -30,11 +30,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.CreateBoxRequest
-import com.example.mysterybox.data.model.Result
-import com.example.mysterybox.data.repository.MerchantRepository
 import com.example.mysterybox.ui.theme.*
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import com.example.mysterybox.ui.viewmodel.CreateBoxUiState
+import com.example.mysterybox.ui.viewmodel.MerchantViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,11 +48,19 @@ fun UploadBoxScreen(
     var discountedPrice by remember { mutableStateOf("199") }
     var quantity by remember { mutableStateOf(5) }
     var saleTime by remember { mutableStateOf("今天, 18:00") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val scope = rememberCoroutineScope()
-    val repository: MerchantRepository = koinInject()
+    val viewModel: MerchantViewModel = koinViewModel()
+    val createBoxState by viewModel.createBoxState.collectAsState()
+
+    val isLoading = createBoxState is CreateBoxUiState.Loading
+    val errorMessage = (createBoxState as? CreateBoxUiState.Error)?.message
+
+    LaunchedEffect(createBoxState) {
+        if (createBoxState is CreateBoxUiState.Success) {
+            viewModel.resetCreateBoxState()
+            onUploadSuccess()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -262,26 +269,17 @@ fun UploadBoxScreen(
             // Upload Button
             Button(
                 onClick = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val result = repository.createBox(
-                            CreateBoxRequest(
-                                name = boxName,
-                                description = description,
-                                contentReference = contentReference,
-                                originalPrice = originalPrice.toIntOrNull() ?: 0,
-                                discountedPrice = discountedPrice.toIntOrNull() ?: 0,
-                                quantity = quantity,
-                                saleStartTime = saleTime
-                            )
+                    viewModel.createBox(
+                        CreateBoxRequest(
+                            name = boxName,
+                            description = description,
+                            contentReference = contentReference,
+                            originalPrice = originalPrice.toIntOrNull() ?: 0,
+                            discountedPrice = discountedPrice.toIntOrNull() ?: 0,
+                            quantity = quantity,
+                            saleStartTime = saleTime
                         )
-                        isLoading = false
-                        when (result) {
-                            is Result.Success -> onUploadSuccess()
-                            is Result.Error -> errorMessage = result.message
-                        }
-                    }
+                    )
                 },
                 enabled = boxName.isNotBlank() && !isLoading,
                 modifier = Modifier
