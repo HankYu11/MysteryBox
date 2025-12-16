@@ -14,14 +14,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mysterybox.data.model.AuthState
 import com.example.mysterybox.ui.theme.*
 
 @Composable
 fun LoginScreen(
+    authState: AuthState = AuthState.Idle,
     onLoginClick: () -> Unit,
     onSkipClick: () -> Unit,
     onMerchantLoginClick: () -> Unit = {}
 ) {
+    val isLoading = authState is AuthState.Loading
+    val errorMessage = (authState as? AuthState.Error)?.message
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -112,6 +116,26 @@ fun LoginScreen(
             lineHeight = 22.sp
         )
 
+        // Error Message
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         // LINE Login Button
@@ -121,34 +145,50 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Green500
+                containerColor = Green500,
+                disabledContainerColor = Green500.copy(alpha = 0.6f)
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isLoading
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // LINE icon placeholder
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "L",
-                        color = Green500,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = White,
+                    strokeWidth = 2.dp
+                )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "透過 LINE 帳號登入",
+                    text = "登入中...",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // LINE icon placeholder
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "L",
+                            color = Green500,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "透過 LINE 帳號登入",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
 
