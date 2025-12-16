@@ -19,7 +19,8 @@ import com.example.mysterybox.ui.theme.*
 @Composable
 fun LoginScreen(
     onLoginClick: () -> Unit,
-    onSkipClick: () -> Unit
+    onSkipClick: () -> Unit,
+    onMerchantLoginClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -161,7 +162,28 @@ fun LoginScreen(
             modifier = Modifier.clickable { onSkipClick() }
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Merchant Login Link
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "我是店家？",
+                color = Gray400,
+                fontSize = 13.sp
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "店家登入",
+                color = Green600,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { onMerchantLoginClick() }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Footer
         Text(

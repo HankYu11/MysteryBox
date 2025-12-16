@@ -42,6 +42,9 @@ fun App() {
                         navController.navigate(Home) {
                             popUpTo(Welcome) { inclusive = true }
                         }
+                    },
+                    onMerchantLoginClick = {
+                        navController.navigate(MerchantLogin)
                     }
                 )
             }
@@ -86,6 +89,35 @@ fun App() {
                     },
                     onNavigateToProfile = {
                         // Profile not implemented yet
+                    }
+                )
+            }
+
+            // Merchant Screens
+            composable<MerchantLogin> {
+                MerchantLoginScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onLoginSuccess = {
+                        navController.navigate(UploadBox) {
+                            popUpTo(MerchantLogin) { inclusive = true }
+                        }
+                    },
+                    onApplyClick = {
+                        // Apply for partnership - not implemented
+                    }
+                )
+            }
+
+            composable<UploadBox> {
+                UploadBoxScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onUploadSuccess = {
+                        // Go back or show success message
+                        navController.popBackStack()
                     }
                 )
             }

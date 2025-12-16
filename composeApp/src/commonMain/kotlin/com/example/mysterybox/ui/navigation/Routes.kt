@@ -19,3 +19,12 @@ object MyReservations
 
 @Serializable
 object Profile
+
+@Serializable
+object MerchantLogin
+
+@Serializable
+object MerchantDashboard
+
+@Serializable
+object UploadBox
