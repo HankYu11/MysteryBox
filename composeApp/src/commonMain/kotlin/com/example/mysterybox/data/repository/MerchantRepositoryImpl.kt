@@ -1,11 +1,20 @@
 package com.example.mysterybox.data.repository
 
 import com.example.mysterybox.data.dto.CreateBoxRequestDto
+import com.example.mysterybox.data.dto.MerchantDashboardDto
+import com.example.mysterybox.data.dto.MerchantOrderDto
+import com.example.mysterybox.data.dto.MerchantOrderSummaryDto
 import com.example.mysterybox.data.dto.toDomain
 import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.CreateBoxRequest
 import com.example.mysterybox.data.model.Merchant
+import com.example.mysterybox.data.model.MerchantDashboard
 import com.example.mysterybox.data.model.MerchantLoginRequest
+import com.example.mysterybox.data.model.MerchantOrder
+import com.example.mysterybox.data.model.MerchantOrderBox
+import com.example.mysterybox.data.model.MerchantOrderCustomer
+import com.example.mysterybox.data.model.MerchantOrderStatus
+import com.example.mysterybox.data.model.MerchantOrderSummary
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.network.MysteryBoxApiService
@@ -64,6 +73,24 @@ class MerchantRepositoryImpl(
         }
     }
 
+    override suspend fun getDashboard(): Result<MerchantDashboard> {
+        return apiService.getMerchantDashboard().map { it.toDomain() }
+    }
+
+    override suspend fun getOrders(status: String?, search: String?): Result<List<MerchantOrder>> {
+        return apiService.getMerchantOrders(status, search).map { dtos ->
+            dtos.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun verifyOrder(orderId: String): Result<Unit> {
+        return apiService.verifyOrder(orderId).map { }
+    }
+
+    override suspend fun cancelOrder(orderId: String): Result<Unit> {
+        return apiService.cancelMerchantOrder(orderId).map { }
+    }
+
     private fun extractPickupTime(saleStartTime: String): String {
         return saleStartTime.split(",").lastOrNull()?.trim() ?: "18:00"
     }
@@ -75,3 +102,43 @@ class MerchantRepositoryImpl(
         return "${endHour.toString().padStart(2, '0')}:00"
     }
 }
+
+private fun MerchantDashboardDto.toDomain() = MerchantDashboard(
+    todayRevenue = todayRevenue,
+    revenueChangePercent = revenueChangePercent,
+    todayOrders = todayOrders,
+    activeBoxes = activeBoxes,
+    storeViews = storeViews,
+    recentOrders = recentOrders.map { it.toDomain() }
+)
+
+private fun MerchantOrderSummaryDto.toDomain() = MerchantOrderSummary(
+    id = id,
+    orderId = orderId,
+    customerName = customerName,
+    customerInitial = customerInitial,
+    itemDescription = itemDescription,
+    status = MerchantOrderStatus.fromString(status),
+    timeAgo = timeAgo
+)
+
+private fun MerchantOrderDto.toDomain() = MerchantOrder(
+    id = id,
+    orderId = orderId,
+    orderTime = orderTime,
+    status = MerchantOrderStatus.fromString(status),
+    isOverdue = isOverdue,
+    overdueTime = overdueTime,
+    box = MerchantOrderBox(
+        id = box.id,
+        name = box.name,
+        specs = box.specs,
+        quantity = box.quantity,
+        imageUrl = box.imageUrl
+    ),
+    customer = MerchantOrderCustomer(
+        name = customer.name,
+        phone = customer.phone
+    ),
+    totalPrice = totalPrice
+)
