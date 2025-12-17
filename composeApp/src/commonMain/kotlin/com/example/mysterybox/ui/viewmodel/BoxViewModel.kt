@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
+import com.example.mysterybox.data.model.Reservation
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.repository.BoxRepository
+import com.example.mysterybox.data.repository.ReservationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,8 +16,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+sealed class ReservationState {
+    data object Idle : ReservationState()
+    data object Loading : ReservationState()
+    data object Success : ReservationState()
+    data class Error(val message: String) : ReservationState()
+}
+
 class BoxViewModel(
-    private val boxRepository: BoxRepository
+    private val boxRepository: BoxRepository,
+    private val reservationRepository: ReservationRepository
 ) : ViewModel() {
 
     private val _boxes = MutableStateFlow<List<MysteryBox>>(emptyList())
@@ -29,6 +39,9 @@ class BoxViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _reservationState = MutableStateFlow<ReservationState>(ReservationState.Idle)
+    val reservationState: StateFlow<ReservationState> = _reservationState.asStateFlow()
 
     val filteredBoxes: StateFlow<List<MysteryBox>> = combine(_boxes, _selectedFilter) { boxes, filter ->
         when (filter) {
@@ -69,6 +82,20 @@ class BoxViewModel(
 
     fun clearSelectedBox() {
         _selectedBox.value = null
+    }
+
+    fun createReservation(box: MysteryBox) {
+        viewModelScope.launch {
+            _reservationState.value = ReservationState.Loading
+            when (val result = reservationRepository.createReservation(box)) {
+                is Result.Success -> _reservationState.value = ReservationState.Success
+                is Result.Error -> _reservationState.value = ReservationState.Error(result.error.toMessage())
+            }
+        }
+    }
+
+    fun resetReservationState() {
+        _reservationState.value = ReservationState.Idle
     }
 }
 

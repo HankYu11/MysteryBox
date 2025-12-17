@@ -59,23 +59,6 @@ class ReservationViewModel(
         }
     }
 
-    fun createReservation(box: MysteryBox) {
-        viewModelScope.launch {
-            _createReservationState.value = ReservationUiState.Loading
-
-            when (val result = reservationRepository.createReservation(box)) {
-                is Result.Success -> {
-                    _createReservationState.value = ReservationUiState.Success(result.data)
-                    // Refresh reservations list to include the new one
-                    loadReservations()
-                }
-                is Result.Error -> {
-                    _createReservationState.value = ReservationUiState.Error(result.error.toMessage())
-                }
-            }
-        }
-    }
-
     fun cancelReservation(id: String) {
         viewModelScope.launch {
             _isLoading.value = true

@@ -103,8 +103,7 @@ fun App(
                     onBackClick = {
                         navController.popBackStack()
                     },
-                    onReserveClick = { box ->
-                        // Handle reservation
+                    onNavigateToReservations = {
                         navController.navigate(MyReservations)
                     }
                 )

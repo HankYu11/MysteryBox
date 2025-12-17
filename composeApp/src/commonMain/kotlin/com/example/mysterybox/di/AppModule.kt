@@ -16,6 +16,7 @@ import com.example.mysterybox.ui.viewmodel.BoxViewModel
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel
 import com.example.mysterybox.ui.viewmodel.ReservationViewModel
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -35,7 +36,7 @@ val repositoryModule = module {
 
 val viewModelModule = module {
     viewModelOf(::AuthViewModel)
-    viewModelOf(::BoxViewModel)
+    viewModel { BoxViewModel(get(), get()) }
     viewModelOf(::MerchantViewModel)
     viewModelOf(::ReservationViewModel)
 }

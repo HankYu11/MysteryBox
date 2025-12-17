@@ -26,6 +26,7 @@ import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.viewmodel.BoxViewModel
+import com.example.mysterybox.ui.viewmodel.ReservationState
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,18 +34,37 @@ import org.koin.compose.viewmodel.koinViewModel
 fun BoxDetailScreen(
     boxId: String,
     onBackClick: () -> Unit,
-    onReserveClick: (MysteryBox) -> Unit,
+    onNavigateToReservations: () -> Unit,
     viewModel: BoxViewModel = koinViewModel()
 ) {
     val selectedBox by viewModel.selectedBox.collectAsState()
+    val reservationState by viewModel.reservationState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(boxId) {
         viewModel.loadBoxDetail(boxId)
     }
 
+    LaunchedEffect(reservationState) {
+        when (reservationState) {
+            is ReservationState.Success -> {
+                viewModel.resetReservationState()
+                onNavigateToReservations()
+            }
+            is ReservationState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = (reservationState as ReservationState.Error).message
+                )
+                viewModel.resetReservationState()
+            }
+            else -> {}
+        }
+    }
+
     val box = selectedBox ?: return
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mystery Box Details") },
@@ -89,7 +109,7 @@ fun BoxDetailScreen(
                     }
 
                     Button(
-                        onClick = { onReserveClick(box) },
+                        onClick = { viewModel.createReservation(box) },
                         enabled = box.status != BoxStatus.SOLD_OUT,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Green500,
