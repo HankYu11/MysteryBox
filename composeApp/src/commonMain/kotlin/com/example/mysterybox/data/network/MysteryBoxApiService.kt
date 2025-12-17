@@ -103,7 +103,7 @@ class MysteryBoxApiService(
         }
     }
 
-    suspend fun createReservation(boxId: String): Result<ReservationDto> {
+    suspend fun createReservation(boxId: String): Result<ReservationCreatedDto> {
         val token = tokenManager.getAccessToken()
             ?: return Result.Error(ApiError.AuthenticationError("Not authenticated"))
 

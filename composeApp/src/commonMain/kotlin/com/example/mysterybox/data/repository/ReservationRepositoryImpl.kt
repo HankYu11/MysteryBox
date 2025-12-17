@@ -4,6 +4,7 @@ import com.example.mysterybox.data.dto.toDomain
 import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Reservation
+import com.example.mysterybox.data.model.ReservationStatus
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.network.MysteryBoxApiService
 
@@ -32,7 +33,26 @@ class ReservationRepositoryImpl(
     }
 
     override suspend fun createReservation(box: MysteryBox): Result<Reservation> {
-        return apiService.createReservation(box.id).map { it.toDomain() }
+        return apiService.createReservation(box.id).map { dto ->
+            Reservation(
+                id = dto.id,
+                orderId = dto.orderId,
+                box = box,
+                status = parseReservationStatus(dto.status),
+                pickupDate = dto.pickupDate,
+                pickupTimeStart = box.pickupTimeStart,
+                pickupTimeEnd = box.pickupTimeEnd,
+                price = dto.price
+            )
+        }
+    }
+
+    private fun parseReservationStatus(status: String): ReservationStatus {
+        return try {
+            ReservationStatus.valueOf(status)
+        } catch (e: IllegalArgumentException) {
+            ReservationStatus.RESERVED
+        }
     }
 
     override suspend fun cancelReservation(id: String): Result<Unit> {
