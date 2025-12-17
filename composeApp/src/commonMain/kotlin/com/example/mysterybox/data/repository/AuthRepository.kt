@@ -9,15 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 interface AuthRepository {
     val authState: StateFlow<AuthState>
 
-    suspend fun exchangeLineCode(code: String, state: String): Result<AuthSession>
+    suspend fun loginWithLine(): Result<AuthSession>
 
     fun getCurrentUser(): User?
 
     fun isAuthenticated(): Boolean
 
     suspend fun logout()
-
-    fun validateState(receivedState: String): Boolean
-
-    fun storeState(state: String)
 }

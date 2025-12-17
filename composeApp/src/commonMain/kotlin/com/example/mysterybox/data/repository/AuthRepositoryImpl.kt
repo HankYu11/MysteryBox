@@ -22,12 +22,11 @@ class AuthRepositoryImpl(
     override val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     private var currentUser: User? = null
-    private var storedState: String? = null
 
-    override suspend fun exchangeLineCode(code: String, state: String): Result<AuthSession> {
+    override suspend fun loginWithLine(): Result<AuthSession> {
         _authState.value = AuthState.Loading
 
-        return when (val result = apiService.loginWithLine(code, state, ApiConfig.REDIRECT_URI)) {
+        return when (val result = apiService.loginWithLine("mock_code", null, ApiConfig.REDIRECT_URI)) {
             is Result.Success -> {
                 val response = result.data
                 if (response.success && response.session != null) {
@@ -67,16 +66,7 @@ class AuthRepositoryImpl(
         } finally {
             tokenManager.clearUserTokens()
             currentUser = null
-            storedState = null
             _authState.value = AuthState.Idle
         }
-    }
-
-    override fun validateState(receivedState: String): Boolean {
-        return storedState == receivedState
-    }
-
-    override fun storeState(state: String) {
-        storedState = state
     }
 }
