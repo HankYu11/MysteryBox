@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.MerchantOrderStatus
 import com.example.mysterybox.data.model.MerchantOrderSummary
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.data.model.MerchantDashboard
 import com.example.mysterybox.ui.viewmodel.DashboardUiState
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -530,3 +532,252 @@ private fun getGreeting(): String {
     // Use a simple greeting - time-based greeting would require platform-specific implementation
     return "您好"
 }
+
+// region Preview
+
+@Preview
+@Composable
+private fun MerchantDashboardContentPreview() {
+    val mockDashboard = MerchantDashboard(
+        todayRevenue = 12580,
+        revenueChangePercent = 12,
+        todayOrders = 8,
+        activeBoxes = 3,
+        storeViews = 156,
+        recentOrders = listOf(
+            MerchantOrderSummary(
+                id = "1",
+                orderId = "#8823",
+                customerName = "王小明",
+                customerInitial = "王",
+                itemDescription = "綜合麵包驚喜箱 x 1",
+                status = MerchantOrderStatus.PENDING_PICKUP,
+                timeAgo = "10 分鐘前"
+            ),
+            MerchantOrderSummary(
+                id = "2",
+                orderId = "#8822",
+                customerName = "李美麗",
+                customerInitial = "李",
+                itemDescription = "甜點驚喜箱 x 2",
+                status = MerchantOrderStatus.COMPLETED,
+                timeAgo = "30 分鐘前"
+            ),
+            MerchantOrderSummary(
+                id = "3",
+                orderId = "#8821",
+                customerName = "陳大華",
+                customerInitial = "陳",
+                itemDescription = "日式便當箱 x 1",
+                status = MerchantOrderStatus.CANCELLED,
+                timeAgo = "1 小時前"
+            )
+        )
+    )
+
+    MerchantDashboardContent(
+        storeName = "好味道烘焙坊",
+        dashboard = mockDashboard,
+        onNavigateToUploadBox = {},
+        onNavigateToOrders = {},
+        onLogout = {}
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MerchantDashboardContent(
+    storeName: String,
+    dashboard: MerchantDashboard,
+    onNavigateToUploadBox: () -> Unit,
+    onNavigateToOrders: () -> Unit,
+    onLogout: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Green500),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = storeName.firstOrNull()?.toString() ?: "M",
+                                color = White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = getGreeting(),
+                                color = Gray500,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = storeName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Gray900
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "通知",
+                            tint = Gray600
+                        )
+                    }
+                    IconButton(onClick = onLogout) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "登出",
+                            tint = Gray600
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = White
+                )
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Gray50)
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+
+            item {
+                Text(
+                    text = "今日概覽",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Gray900
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "今日營收",
+                        value = "NT\$${dashboard.todayRevenue}",
+                        changePercent = dashboard.revenueChangePercent,
+                        icon = Icons.Default.AttachMoney,
+                        iconBackgroundColor = Green50,
+                        iconColor = Green500
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "今日訂單",
+                        value = dashboard.todayOrders.toString(),
+                        icon = Icons.Default.Receipt,
+                        iconBackgroundColor = Blue100,
+                        iconColor = Blue500
+                    )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "上架中神秘箱",
+                        value = dashboard.activeBoxes.toString(),
+                        icon = Icons.Default.Inventory2,
+                        iconBackgroundColor = Orange100,
+                        iconColor = Orange500
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "店鋪瀏覽",
+                        value = dashboard.storeViews.toString(),
+                        icon = Icons.Default.Visibility,
+                        iconBackgroundColor = Purple100,
+                        iconColor = Purple500
+                    )
+                }
+            }
+
+            item {
+                Button(
+                    onClick = onNavigateToUploadBox,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Green500),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "發布新神秘箱",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            item {
+                OrderManagementCard(onClick = onNavigateToOrders)
+            }
+
+            if (dashboard.recentOrders.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "最近訂單",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Gray900
+                        )
+                        TextButton(onClick = onNavigateToOrders) {
+                            Text(
+                                text = "查看全部",
+                                color = Green500,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+
+                items(dashboard.recentOrders) { order ->
+                    RecentOrderItem(order = order)
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+    }
+}
+
+// endregion
