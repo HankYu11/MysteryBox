@@ -11,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.mysterybox.data.model.AuthState
-import com.example.mysterybox.data.model.OAuthCallbackResult
 import com.example.mysterybox.di.appModules
 import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
@@ -23,10 +22,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 @Preview
-fun App(
-    oauthCallback: OAuthCallbackResult? = null,
-    onOAuthCallbackHandled: () -> Unit = {}
-) {
+fun App() {
     KoinApplication(application = {
         modules(appModules)
     }) {
@@ -34,14 +30,6 @@ fun App(
             val navController = rememberNavController()
             val authViewModel: AuthViewModel = koinViewModel()
             val authState by authViewModel.authState.collectAsState()
-
-        // Handle OAuth callback
-        LaunchedEffect(oauthCallback) {
-            oauthCallback?.let { callback ->
-                authViewModel.handleOAuthCallback(callback)
-                onOAuthCallbackHandled()
-            }
-        }
 
         // Navigate on successful auth
         LaunchedEffect(authState) {

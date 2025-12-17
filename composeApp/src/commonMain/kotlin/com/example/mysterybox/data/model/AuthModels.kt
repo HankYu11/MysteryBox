@@ -32,9 +32,3 @@ sealed class AuthState {
     data class Authenticated(val user: User, val accessToken: String) : AuthState()
     data class Error(val message: String, val code: String? = null) : AuthState()
 }
-
-data class OAuthCallbackResult(
-    val code: String?,
-    val state: String?,
-    val error: String?
-)
