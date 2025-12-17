@@ -120,12 +120,36 @@ fun App() {
                         navController.popBackStack()
                     },
                     onLoginSuccess = {
-                        navController.navigate(UploadBox) {
+                        navController.navigate(MerchantDashboard) {
                             popUpTo(MerchantLogin) { inclusive = true }
                         }
                     },
                     onApplyClick = {
                         // Apply for partnership - not implemented
+                    }
+                )
+            }
+
+            composable<MerchantDashboard> {
+                MerchantDashboardScreen(
+                    onNavigateToUploadBox = {
+                        navController.navigate(UploadBox)
+                    },
+                    onNavigateToOrders = {
+                        navController.navigate(MerchantOrders)
+                    },
+                    onLogout = {
+                        navController.navigate(Login) {
+                            popUpTo(MerchantDashboard) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable<MerchantOrders> {
+                MerchantOrdersScreen(
+                    onBackClick = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -136,7 +160,6 @@ fun App() {
                         navController.popBackStack()
                     },
                     onUploadSuccess = {
-                        // Go back or show success message
                         navController.popBackStack()
                     }
                 )

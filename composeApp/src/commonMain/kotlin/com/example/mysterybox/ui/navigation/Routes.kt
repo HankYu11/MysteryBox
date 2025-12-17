@@ -27,4 +27,7 @@ object MerchantLogin
 object MerchantDashboard
 
 @Serializable
+object MerchantOrders
+
+@Serializable
 object UploadBox
