@@ -72,6 +72,6 @@ class MerchantRepositoryImpl(
         val startTime = extractPickupTime(saleStartTime)
         val hour = startTime.split(":").firstOrNull()?.toIntOrNull() ?: 18
         val endHour = minOf(hour + 2, 23)
-        return "%02d:00".format(endHour)
+        return "${endHour.toString().padStart(2, '0')}:00"
     }
 }
