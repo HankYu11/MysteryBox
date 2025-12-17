@@ -20,6 +20,11 @@ object ApiConfig {
     // Merchant endpoints
     const val MERCHANT_LOGIN = "/api/merchant/login"
     const val MERCHANT_BOXES = "/api/merchant/boxes"
+    const val MERCHANT_DASHBOARD = "/api/merchant/dashboard"
+    const val MERCHANT_ORDERS = "/api/merchant/orders"
+    fun merchantOrderDetail(id: String) = "/api/merchant/orders/$id"
+    fun merchantOrderVerify(id: String) = "/api/merchant/orders/$id/verify"
+    fun merchantOrderCancel(id: String) = "/api/merchant/orders/$id/cancel"
 
     // OAuth redirect URI for backend
     const val REDIRECT_URI = "mysterybox://auth/callback"

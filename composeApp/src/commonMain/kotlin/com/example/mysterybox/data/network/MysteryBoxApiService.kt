@@ -160,4 +160,50 @@ class MysteryBoxApiService(
             }
         }
     }
+
+    suspend fun getMerchantDashboard(): Result<MerchantDashboardDto> {
+        val token = tokenManager.getMerchantToken()
+            ?: return Result.Error(ApiError.AuthenticationError("Merchant not authenticated"))
+
+        return safeApiCall {
+            httpClient.get("${ApiConfig.BASE_URL}${ApiConfig.MERCHANT_DASHBOARD}") {
+                bearerAuth(token)
+            }
+        }
+    }
+
+    suspend fun getMerchantOrders(status: String? = null, search: String? = null): Result<List<MerchantOrderDto>> {
+        val token = tokenManager.getMerchantToken()
+            ?: return Result.Error(ApiError.AuthenticationError("Merchant not authenticated"))
+
+        return safeApiCall {
+            httpClient.get("${ApiConfig.BASE_URL}${ApiConfig.MERCHANT_ORDERS}") {
+                bearerAuth(token)
+                status?.let { parameter("status", it) }
+                search?.let { parameter("search", it) }
+            }
+        }
+    }
+
+    suspend fun verifyOrder(orderId: String): Result<VerifyOrderResponseDto> {
+        val token = tokenManager.getMerchantToken()
+            ?: return Result.Error(ApiError.AuthenticationError("Merchant not authenticated"))
+
+        return safeApiCall {
+            httpClient.post("${ApiConfig.BASE_URL}${ApiConfig.merchantOrderVerify(orderId)}") {
+                bearerAuth(token)
+            }
+        }
+    }
+
+    suspend fun cancelMerchantOrder(orderId: String): Result<VerifyOrderResponseDto> {
+        val token = tokenManager.getMerchantToken()
+            ?: return Result.Error(ApiError.AuthenticationError("Merchant not authenticated"))
+
+        return safeApiCall {
+            httpClient.post("${ApiConfig.BASE_URL}${ApiConfig.merchantOrderCancel(orderId)}") {
+                bearerAuth(token)
+            }
+        }
+    }
 }
