@@ -1,71 +1,77 @@
 package com.example.mysterybox.data.repository
 
-import com.example.mysterybox.data.model.BoxStatus
+import com.example.mysterybox.data.dto.CreateBoxRequestDto
+import com.example.mysterybox.data.dto.toDomain
+import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.CreateBoxRequest
 import com.example.mysterybox.data.model.Merchant
 import com.example.mysterybox.data.model.MerchantLoginRequest
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
-import kotlinx.coroutines.delay
+import com.example.mysterybox.data.network.MysteryBoxApiService
+import com.example.mysterybox.data.network.TokenManager
 
-class MerchantRepositoryImpl : MerchantRepository {
+class MerchantRepositoryImpl(
+    private val apiService: MysteryBoxApiService,
+    private val tokenManager: TokenManager
+) : MerchantRepository {
     private var currentMerchant: Merchant? = null
-    private val merchantBoxes = mutableListOf<MysteryBox>()
-    private var boxIdCounter = 100
 
     override suspend fun login(request: MerchantLoginRequest): Result<Merchant> {
-        // Simulate network delay
-        delay(1000)
-
-        // Mock validation
-        return if (request.email.isNotBlank() && request.password.length >= 6) {
-            val merchant = Merchant(
-                id = "merchant_001",
-                email = request.email,
-                storeName = "Downtown Happy Bakery",
-                storeAddress = "台北大安旗艦店",
-                isVerified = true
-            )
-            currentMerchant = merchant
-            Result.Success(merchant)
-        } else {
-            Result.Error("帳號或密碼錯誤")
+        return when (val result = apiService.merchantLogin(request.email, request.password)) {
+            is Result.Success -> {
+                val merchantResponse = result.data
+                val merchant = merchantResponse.toDomain()
+                currentMerchant = merchant
+                merchantResponse.token?.let { tokenManager.saveMerchantToken(it) }
+                Result.Success(merchant)
+            }
+            is Result.Error -> result
         }
     }
 
     override fun logout() {
         currentMerchant = null
+        tokenManager.clearMerchantToken()
     }
 
     override fun getCurrentMerchant(): Merchant? = currentMerchant
 
-    override fun isLoggedIn(): Boolean = currentMerchant != null
+    override fun isLoggedIn(): Boolean = tokenManager.isMerchantAuthenticated()
 
     override suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox> {
-        val merchant = currentMerchant ?: return Result.Error("請先登入")
+        if (!isLoggedIn()) {
+            return Result.Error(ApiError.AuthenticationError("請先登入"))
+        }
 
-        // Simulate network delay
-        delay(800)
-
-        val newBox = MysteryBox(
-            id = "box_${++boxIdCounter}",
+        val dto = CreateBoxRequestDto(
             name = request.name,
             description = request.description,
             originalPrice = request.originalPrice,
             discountedPrice = request.discountedPrice,
-            imageUrl = request.imageUrl ?: "custom",
-            storeName = merchant.storeName,
-            storeAddress = merchant.storeAddress,
-            pickupTimeStart = request.saleStartTime.split(",").lastOrNull()?.trim() ?: "18:00",
-            pickupTimeEnd = "21:00",
-            status = BoxStatus.AVAILABLE,
-            remainingCount = request.quantity,
-            discountPercent = ((request.originalPrice - request.discountedPrice) * 100 / request.originalPrice)
+            quantity = request.quantity,
+            pickupTimeStart = extractPickupTime(request.saleStartTime),
+            pickupTimeEnd = calculatePickupEndTime(request.saleStartTime),
+            imageUrl = request.imageUrl
         )
 
-        merchantBoxes.add(newBox)
-        return Result.Success(newBox)
+        return apiService.createBox(dto).map { it.toDomain() }
     }
 
-    override fun getMerchantBoxes(): List<MysteryBox> = merchantBoxes.toList()
+    override suspend fun getMerchantBoxes(): Result<List<MysteryBox>> {
+        return apiService.getMerchantBoxes().map { dtos ->
+            dtos.map { it.toDomain() }
+        }
+    }
+
+    private fun extractPickupTime(saleStartTime: String): String {
+        return saleStartTime.split(",").lastOrNull()?.trim() ?: "18:00"
+    }
+
+    private fun calculatePickupEndTime(saleStartTime: String): String {
+        val startTime = extractPickupTime(saleStartTime)
+        val hour = startTime.split(":").firstOrNull()?.toIntOrNull() ?: 18
+        val endHour = minOf(hour + 2, 23)
+        return "%02d:00".format(endHour)
+    }
 }

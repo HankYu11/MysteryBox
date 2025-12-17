@@ -12,5 +12,5 @@ interface MerchantRepository {
     fun getCurrentMerchant(): Merchant?
     fun isLoggedIn(): Boolean
     suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox>
-    fun getMerchantBoxes(): List<MysteryBox>
+    suspend fun getMerchantBoxes(): Result<List<MysteryBox>>
 }

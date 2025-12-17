@@ -44,7 +44,7 @@ class MerchantViewModel(
         // Check if already logged in
         merchantRepository.getCurrentMerchant()?.let { merchant ->
             _uiState.value = MerchantUiState.LoggedIn(merchant)
-            _merchantBoxes.value = merchantRepository.getMerchantBoxes()
+            loadMerchantBoxes()
         }
     }
 
@@ -55,9 +55,10 @@ class MerchantViewModel(
             when (val result = merchantRepository.login(MerchantLoginRequest(email, password))) {
                 is Result.Success -> {
                     _uiState.value = MerchantUiState.LoggedIn(result.data)
+                    loadMerchantBoxes()
                 }
                 is Result.Error -> {
-                    _uiState.value = MerchantUiState.Error(result.message)
+                    _uiState.value = MerchantUiState.Error(result.error.toMessage())
                 }
             }
         }
@@ -76,10 +77,23 @@ class MerchantViewModel(
             when (val result = merchantRepository.createBox(request)) {
                 is Result.Success -> {
                     _createBoxState.value = CreateBoxUiState.Success(result.data)
-                    _merchantBoxes.value = merchantRepository.getMerchantBoxes()
+                    loadMerchantBoxes()
                 }
                 is Result.Error -> {
-                    _createBoxState.value = CreateBoxUiState.Error(result.message)
+                    _createBoxState.value = CreateBoxUiState.Error(result.error.toMessage())
+                }
+            }
+        }
+    }
+
+    private fun loadMerchantBoxes() {
+        viewModelScope.launch {
+            when (val result = merchantRepository.getMerchantBoxes()) {
+                is Result.Success -> {
+                    _merchantBoxes.value = result.data
+                }
+                is Result.Error -> {
+                    // Silently handle error - boxes will remain empty
                 }
             }
         }

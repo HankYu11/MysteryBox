@@ -70,7 +70,7 @@ class ReservationViewModel(
                     loadReservations()
                 }
                 is Result.Error -> {
-                    _createReservationState.value = ReservationUiState.Error(result.message)
+                    _createReservationState.value = ReservationUiState.Error(result.error.toMessage())
                 }
             }
         }
