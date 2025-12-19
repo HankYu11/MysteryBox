@@ -79,13 +79,11 @@ class MerchantViewModel(
     val uiState: StateFlow<MerchantUiState> = _uiState.asStateFlow()
 
     private val _currentMerchant = MutableStateFlow<Merchant?>(null)
-    val currentMerchant: StateFlow<Merchant?> = _currentMerchant.asStateFlow()
 
     private val _createBoxState = MutableStateFlow<CreateBoxUiState>(CreateBoxUiState.Idle)
     val createBoxState: StateFlow<CreateBoxUiState> = _createBoxState.asStateFlow()
 
     private val _merchantBoxes = MutableStateFlow<List<MysteryBox>>(emptyList())
-    val merchantBoxes: StateFlow<List<MysteryBox>> = _merchantBoxes.asStateFlow()
 
     private val _dashboardState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
     val dashboardState: StateFlow<DashboardUiState> = _dashboardState.asStateFlow()

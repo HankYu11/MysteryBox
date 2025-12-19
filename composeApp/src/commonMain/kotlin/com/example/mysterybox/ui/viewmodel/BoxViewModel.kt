@@ -29,7 +29,6 @@ class BoxViewModel(
 ) : ViewModel() {
 
     private val _boxes = MutableStateFlow<List<MysteryBox>>(emptyList())
-    val boxes: StateFlow<List<MysteryBox>> = _boxes.asStateFlow()
 
     private val _selectedBox = MutableStateFlow<MysteryBox?>(null)
     val selectedBox: StateFlow<MysteryBox?> = _selectedBox.asStateFlow()
@@ -37,8 +36,6 @@ class BoxViewModel(
     private val _selectedFilter = MutableStateFlow(BoxFilter.ALL)
     val selectedFilter: StateFlow<BoxFilter> = _selectedFilter.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _reservationState = MutableStateFlow<ReservationState>(ReservationState.Idle)
     val reservationState: StateFlow<ReservationState> = _reservationState.asStateFlow()
@@ -58,12 +55,10 @@ class BoxViewModel(
 
     fun loadBoxes() {
         viewModelScope.launch {
-            _isLoading.value = true
             when (val result = boxRepository.getBoxes()) {
                 is Result.Success -> _boxes.value = result.data
                 is Result.Error -> _boxes.value = emptyList()
             }
-            _isLoading.value = false
         }
     }
 

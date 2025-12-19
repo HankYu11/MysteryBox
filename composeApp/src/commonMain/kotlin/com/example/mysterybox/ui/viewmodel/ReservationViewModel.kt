@@ -29,13 +29,8 @@ class ReservationViewModel(
 ) : ViewModel() {
 
     private val _reservations = MutableStateFlow<List<Reservation>>(emptyList())
-    val reservations: StateFlow<List<Reservation>> = _reservations.asStateFlow()
 
-    private val _createReservationState = MutableStateFlow<ReservationUiState>(ReservationUiState.Idle)
-    val createReservationState: StateFlow<ReservationUiState> = _createReservationState.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _selectedTab = MutableStateFlow(ReservationTab.ACTIVE)
     val selectedTab: StateFlow<ReservationTab> = _selectedTab.asStateFlow()
@@ -49,7 +44,6 @@ class ReservationViewModel(
 
     fun loadReservations() {
         viewModelScope.launch {
-            _isLoading.value = true
             when (val result = reservationRepository.getReservations()) {
                 is Result.Success -> {
                     _reservations.value = result.data
@@ -60,36 +54,30 @@ class ReservationViewModel(
                     _filteredReservations.value = emptyList()
                 }
             }
-            _isLoading.value = false
         }
     }
 
     fun getActiveReservations(): List<Reservation> {
-        return reservations.value.filter {
+        return _reservations.value.filter {
             it.status != ReservationStatus.COMPLETED && it.status != ReservationStatus.CANCELLED
         }
     }
 
     fun getPastReservations(): List<Reservation> {
-        return reservations.value.filter {
+        return _reservations.value.filter {
             it.status == ReservationStatus.COMPLETED || it.status == ReservationStatus.CANCELLED
         }
     }
 
     fun cancelReservation(id: String) {
         viewModelScope.launch {
-            _isLoading.value = true
             when (reservationRepository.cancelReservation(id)) {
                 is Result.Success -> loadReservations()
                 is Result.Error -> { /* Could add error handling here */ }
             }
-            _isLoading.value = false
         }
     }
 
-    fun resetCreateReservationState() {
-        _createReservationState.value = ReservationUiState.Idle
-    }
 
     fun selectTab(tab: ReservationTab) {
         _selectedTab.value = tab
