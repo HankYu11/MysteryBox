@@ -5,6 +5,7 @@ import com.example.mysterybox.data.dto.MysteryBoxDto
 import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.network.TokenManager
+import com.example.mysterybox.data.storage.MockTokenStorage
 import com.example.mysterybox.testutil.TestFixtures
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -17,7 +18,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `login returns merchant on success`() = runTest {
-        val tokenManager = TokenManager()
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -41,7 +43,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `login saves merchant token`() = runTest {
-        val tokenManager = TokenManager()
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -64,7 +67,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `login returns error on API failure`() = runTest {
-        val tokenManager = TokenManager()
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Error(ApiError.AuthenticationError("Invalid credentials"))
         )
@@ -78,8 +82,9 @@ class MerchantRepositoryImplTest {
     }
 
     @Test
-    fun `logout clears merchant token`() {
-        val tokenManager = TokenManager()
+    fun `logout clears merchant token`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveMerchantToken("existing-token")
         val fakeApi = FakeMerchantApiService()
         val repository = TestableMerchantRepository(fakeApi, tokenManager)
@@ -91,12 +96,14 @@ class MerchantRepositoryImplTest {
     }
 
     @Test
-    fun `getCurrentMerchant returns null before login`() {
-        val tokenManager = TokenManager()
+    fun `getCurrentMerchant returns error before login`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         val fakeApi = FakeMerchantApiService()
         val repository = TestableMerchantRepository(fakeApi, tokenManager)
 
-        assertNull(repository.getCurrentMerchant())
+        val result = repository.getCurrentMerchant()
+        assertTrue(result is Result.Error)
     }
 
     @Test

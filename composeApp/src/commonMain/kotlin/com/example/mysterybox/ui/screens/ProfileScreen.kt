@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.example.mysterybox.data.model.AuthState
+import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel

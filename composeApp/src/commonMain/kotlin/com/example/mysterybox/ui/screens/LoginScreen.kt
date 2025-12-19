@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mysterybox.data.model.AuthState
+import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
 
 @Composable

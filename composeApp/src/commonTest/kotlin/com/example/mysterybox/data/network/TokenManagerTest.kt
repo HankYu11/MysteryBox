@@ -1,5 +1,7 @@
 package com.example.mysterybox.data.network
 
+import com.example.mysterybox.data.storage.MockTokenStorage
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -9,8 +11,9 @@ import kotlin.test.assertTrue
 class TokenManagerTest {
 
     @Test
-    fun `initial state has no tokens`() {
-        val tokenManager = TokenManager()
+    fun `initial state has no tokens`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
 
         assertNull(tokenManager.getAccessToken())
         assertNull(tokenManager.getRefreshToken())
@@ -18,8 +21,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `saveUserTokens stores access and refresh tokens`() {
-        val tokenManager = TokenManager()
+    fun `saveUserTokens stores access and refresh tokens`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
 
         tokenManager.saveUserTokens("access-123", "refresh-456")
 
@@ -28,8 +32,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `saveMerchantToken stores merchant token`() {
-        val tokenManager = TokenManager()
+    fun `saveMerchantToken stores merchant token`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
 
         tokenManager.saveMerchantToken("merchant-789")
 
@@ -37,8 +42,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `clearUserTokens removes user tokens but keeps merchant token`() {
-        val tokenManager = TokenManager()
+    fun `clearUserTokens removes user tokens but keeps merchant token`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveUserTokens("access", "refresh")
         tokenManager.saveMerchantToken("merchant")
 
@@ -50,8 +56,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `clearMerchantToken removes merchant token but keeps user tokens`() {
-        val tokenManager = TokenManager()
+    fun `clearMerchantToken removes merchant token but keeps user tokens`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveUserTokens("access", "refresh")
         tokenManager.saveMerchantToken("merchant")
 
@@ -63,8 +70,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `clearAllTokens removes all tokens`() {
-        val tokenManager = TokenManager()
+    fun `clearAllTokens removes all tokens`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveUserTokens("access", "refresh")
         tokenManager.saveMerchantToken("merchant")
 
@@ -76,34 +84,39 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `isUserAuthenticated returns false when no access token`() {
-        val tokenManager = TokenManager()
+    fun `isUserAuthenticated returns false when no access token`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         assertFalse(tokenManager.isUserAuthenticated())
     }
 
     @Test
-    fun `isUserAuthenticated returns true when access token exists`() {
-        val tokenManager = TokenManager()
+    fun `isUserAuthenticated returns true when access token exists`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveUserTokens("access", "refresh")
         assertTrue(tokenManager.isUserAuthenticated())
     }
 
     @Test
-    fun `isMerchantAuthenticated returns false when no merchant token`() {
-        val tokenManager = TokenManager()
+    fun `isMerchantAuthenticated returns false when no merchant token`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         assertFalse(tokenManager.isMerchantAuthenticated())
     }
 
     @Test
-    fun `isMerchantAuthenticated returns true when merchant token exists`() {
-        val tokenManager = TokenManager()
+    fun `isMerchantAuthenticated returns true when merchant token exists`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
         tokenManager.saveMerchantToken("merchant")
         assertTrue(tokenManager.isMerchantAuthenticated())
     }
 
     @Test
-    fun `user and merchant authentication are independent`() {
-        val tokenManager = TokenManager()
+    fun `user and merchant authentication are independent`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
 
         tokenManager.saveUserTokens("access", "refresh")
         assertTrue(tokenManager.isUserAuthenticated())
@@ -119,8 +132,9 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `overwriting tokens works correctly`() {
-        val tokenManager = TokenManager()
+    fun `overwriting tokens works correctly`() = runTest {
+        val mockStorage = MockTokenStorage()
+        val tokenManager = TokenManager(mockStorage)
 
         tokenManager.saveUserTokens("access1", "refresh1")
         assertEquals("access1", tokenManager.getAccessToken())
