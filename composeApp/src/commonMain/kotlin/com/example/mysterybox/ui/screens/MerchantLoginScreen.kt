@@ -37,9 +37,7 @@ fun MerchantLoginScreen(
     onApplyClick: () -> Unit,
     viewModel: MerchantViewModel = koinViewModel()
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    val loginFormState by viewModel.loginFormState.collectAsState()
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -48,6 +46,7 @@ fun MerchantLoginScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is MerchantUiState.LoggedIn) {
+            viewModel.resetLoginForm()
             onLoginSuccess()
         }
     }
@@ -186,9 +185,9 @@ fun MerchantLoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = email,
+                    value = loginFormState.email,
                     onValueChange = {
-                        email = it
+                        viewModel.updateEmail(it)
                         viewModel.clearError()
                     },
                     placeholder = {
@@ -243,9 +242,9 @@ fun MerchantLoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = password,
+                    value = loginFormState.password,
                     onValueChange = {
-                        password = it
+                        viewModel.updatePassword(it)
                         viewModel.clearError()
                     },
                     placeholder = {
@@ -262,15 +261,15 @@ fun MerchantLoginScreen(
                         )
                     },
                     trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        IconButton(onClick = { viewModel.togglePasswordVisibility() }) {
                             Icon(
-                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                imageVector = if (loginFormState.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (loginFormState.passwordVisible) "Hide password" else "Show password",
                                 tint = Gray400
                             )
                         }
                     },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (loginFormState.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -300,10 +299,8 @@ fun MerchantLoginScreen(
 
             // Login Button
             Button(
-                onClick = {
-                    viewModel.login(email, password)
-                },
-                enabled = email.isNotBlank() && password.isNotBlank() && !isLoading,
+                onClick = { viewModel.loginWithForm() },
+                enabled = viewModel.isLoginFormValid() && !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

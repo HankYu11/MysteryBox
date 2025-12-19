@@ -19,6 +19,11 @@ sealed class ReservationUiState {
     data class Error(val message: String) : ReservationUiState()
 }
 
+enum class ReservationTab(val index: Int, val displayName: String) {
+    ACTIVE(0, "進行中"),
+    HISTORY(1, "歷史紀錄")
+}
+
 class ReservationViewModel(
     private val reservationRepository: ReservationRepository
 ) : ViewModel() {
@@ -32,6 +37,12 @@ class ReservationViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _selectedTab = MutableStateFlow(ReservationTab.ACTIVE)
+    val selectedTab: StateFlow<ReservationTab> = _selectedTab.asStateFlow()
+
+    private val _filteredReservations = MutableStateFlow<List<Reservation>>(emptyList())
+    val filteredReservations: StateFlow<List<Reservation>> = _filteredReservations.asStateFlow()
+
     init {
         loadReservations()
     }
@@ -40,8 +51,14 @@ class ReservationViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             when (val result = reservationRepository.getReservations()) {
-                is Result.Success -> _reservations.value = result.data
-                is Result.Error -> _reservations.value = emptyList()
+                is Result.Success -> {
+                    _reservations.value = result.data
+                    updateFilteredReservations()
+                }
+                is Result.Error -> {
+                    _reservations.value = emptyList()
+                    _filteredReservations.value = emptyList()
+                }
             }
             _isLoading.value = false
         }
@@ -72,5 +89,26 @@ class ReservationViewModel(
 
     fun resetCreateReservationState() {
         _createReservationState.value = ReservationUiState.Idle
+    }
+
+    fun selectTab(tab: ReservationTab) {
+        _selectedTab.value = tab
+        updateFilteredReservations()
+    }
+
+    fun selectTabByIndex(index: Int) {
+        val tab = ReservationTab.values().find { it.index == index } ?: ReservationTab.ACTIVE
+        selectTab(tab)
+    }
+
+    private fun updateFilteredReservations() {
+        _filteredReservations.value = when (_selectedTab.value) {
+            ReservationTab.ACTIVE -> getActiveReservations()
+            ReservationTab.HISTORY -> getPastReservations()
+        }
+    }
+
+    fun getTabDisplayNames(): List<String> {
+        return ReservationTab.values().map { it.displayName }
     }
 }

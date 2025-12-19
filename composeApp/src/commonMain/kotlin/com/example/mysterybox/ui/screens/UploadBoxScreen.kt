@@ -42,13 +42,7 @@ fun UploadBoxScreen(
     onUploadSuccess: () -> Unit,
     viewModel: MerchantViewModel = koinViewModel()
 ) {
-    var boxName by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var contentReference by remember { mutableStateOf("") }
-    var originalPrice by remember { mutableStateOf("500") }
-    var discountedPrice by remember { mutableStateOf("199") }
-    var quantity by remember { mutableStateOf(5) }
-    var saleTime by remember { mutableStateOf("今天, 18:00") }
+    val uploadFormState by viewModel.uploadFormState.collectAsState()
 
     val createBoxState by viewModel.createBoxState.collectAsState()
 
@@ -58,6 +52,7 @@ fun UploadBoxScreen(
     LaunchedEffect(createBoxState) {
         if (createBoxState is CreateBoxUiState.Success) {
             viewModel.resetCreateBoxState()
+            viewModel.resetUploadForm()
             onUploadSuccess()
         }
     }
@@ -173,8 +168,8 @@ fun UploadBoxScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = boxName,
-                onValueChange = { boxName = it },
+                value = uploadFormState.boxName,
+                onValueChange = viewModel::updateBoxName,
                 placeholder = {
                     Text(
                         text = "例如：週五驚喜麵包包",
@@ -205,8 +200,8 @@ fun UploadBoxScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
+                value = uploadFormState.description,
+                onValueChange = viewModel::updateDescription,
                 placeholder = {
                     Text(
                         text = "簡單介紹這個箱子的特色，吸引顧客購買...",
@@ -238,8 +233,8 @@ fun UploadBoxScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = contentReference,
-                onValueChange = { contentReference = it },
+                value = uploadFormState.contentReference,
+                onValueChange = viewModel::updateContentReference,
                 placeholder = {
                     Text(
                         text = "例如：隨機麵包 3 個、飲料 1 瓶",
@@ -268,20 +263,8 @@ fun UploadBoxScreen(
 
             // Upload Button
             Button(
-                onClick = {
-                    viewModel.createBox(
-                        CreateBoxRequest(
-                            name = boxName,
-                            description = description,
-                            contentReference = contentReference,
-                            originalPrice = originalPrice.toIntOrNull() ?: 0,
-                            discountedPrice = discountedPrice.toIntOrNull() ?: 0,
-                            quantity = quantity,
-                            saleStartTime = saleTime
-                        )
-                    )
-                },
-                enabled = boxName.isNotBlank() && !isLoading,
+                onClick = { viewModel.createBoxFromForm() },
+                enabled = viewModel.isUploadFormValid() && !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -331,8 +314,8 @@ fun UploadBoxScreen(
             ) {
                 // Original Price
                 OutlinedTextField(
-                    value = originalPrice,
-                    onValueChange = { originalPrice = it.filter { c -> c.isDigit() } },
+                    value = uploadFormState.originalPrice,
+                    onValueChange = viewModel::updateOriginalPrice,
                     label = { Text("原價") },
                     leadingIcon = {
                         Text(
@@ -353,8 +336,8 @@ fun UploadBoxScreen(
 
                 // Discounted Price
                 OutlinedTextField(
-                    value = discountedPrice,
-                    onValueChange = { discountedPrice = it.filter { c -> c.isDigit() } },
+                    value = uploadFormState.discountedPrice,
+                    onValueChange = viewModel::updateDiscountedPrice,
                     label = { Text("優惠價") },
                     leadingIcon = {
                         Text(
@@ -441,7 +424,7 @@ fun UploadBoxScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
-                            onClick = { if (quantity > 1) quantity-- },
+                            onClick = { viewModel.decrementQuantity() },
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
@@ -455,7 +438,7 @@ fun UploadBoxScreen(
                         }
 
                         Text(
-                            text = "$quantity",
+                            text = "${uploadFormState.quantity}",
                             color = Gray900,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
@@ -463,7 +446,7 @@ fun UploadBoxScreen(
                         )
 
                         IconButton(
-                            onClick = { quantity++ },
+                            onClick = { viewModel.incrementQuantity() },
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
@@ -516,7 +499,7 @@ fun UploadBoxScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = saleTime,
+                            text = uploadFormState.saleTime,
                             color = Gray700,
                             fontSize = 15.sp
                         )

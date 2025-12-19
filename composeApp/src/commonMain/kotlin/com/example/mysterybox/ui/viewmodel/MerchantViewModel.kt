@@ -53,6 +53,23 @@ enum class OrderTab {
     PENDING, COMPLETED, CANCELLED, HISTORY
 }
 
+data class UploadFormState(
+    val boxName: String = "",
+    val description: String = "",
+    val contentReference: String = "",
+    val originalPrice: String = "500",
+    val discountedPrice: String = "199",
+    val quantity: Int = 5,
+    val saleTime: String = "今天, 18:00",
+    val imageUrl: String? = null
+)
+
+data class LoginFormState(
+    val email: String = "",
+    val password: String = "",
+    val passwordVisible: Boolean = false
+)
+
 class MerchantViewModel(
     private val merchantRepository: MerchantRepository,
     private val tokenManager: TokenManager
@@ -84,6 +101,13 @@ class MerchantViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    // Form states for UI screens
+    private val _uploadFormState = MutableStateFlow(UploadFormState())
+    val uploadFormState: StateFlow<UploadFormState> = _uploadFormState.asStateFlow()
+
+    private val _loginFormState = MutableStateFlow(LoginFormState())
+    val loginFormState: StateFlow<LoginFormState> = _loginFormState.asStateFlow()
 
     init {
         checkMerchantAuth()
@@ -272,5 +296,116 @@ class MerchantViewModel(
 
     fun resetOrderActionState() {
         _orderActionState.value = OrderActionState.Idle
+    }
+
+    // Upload Form State Management
+    fun updateBoxName(name: String) {
+        _uploadFormState.value = _uploadFormState.value.copy(boxName = name)
+    }
+
+    fun updateDescription(description: String) {
+        _uploadFormState.value = _uploadFormState.value.copy(description = description)
+    }
+
+    fun updateContentReference(reference: String) {
+        _uploadFormState.value = _uploadFormState.value.copy(contentReference = reference)
+    }
+
+    fun updateOriginalPrice(price: String) {
+        val filteredPrice = price.filter { it.isDigit() }
+        _uploadFormState.value = _uploadFormState.value.copy(originalPrice = filteredPrice)
+    }
+
+    fun updateDiscountedPrice(price: String) {
+        val filteredPrice = price.filter { it.isDigit() }
+        _uploadFormState.value = _uploadFormState.value.copy(discountedPrice = filteredPrice)
+    }
+
+    fun updateQuantity(quantity: Int) {
+        if (quantity >= 1) {
+            _uploadFormState.value = _uploadFormState.value.copy(quantity = quantity)
+        }
+    }
+
+    fun incrementQuantity() {
+        _uploadFormState.value = _uploadFormState.value.copy(
+            quantity = _uploadFormState.value.quantity + 1
+        )
+    }
+
+    fun decrementQuantity() {
+        val currentQuantity = _uploadFormState.value.quantity
+        if (currentQuantity > 1) {
+            _uploadFormState.value = _uploadFormState.value.copy(quantity = currentQuantity - 1)
+        }
+    }
+
+    fun updateSaleTime(time: String) {
+        _uploadFormState.value = _uploadFormState.value.copy(saleTime = time)
+    }
+
+    fun updateImageUrl(url: String?) {
+        _uploadFormState.value = _uploadFormState.value.copy(imageUrl = url)
+    }
+
+    fun isUploadFormValid(): Boolean {
+        val form = _uploadFormState.value
+        return form.boxName.isNotBlank() && 
+               form.description.isNotBlank() && 
+               form.originalPrice.isNotBlank() && 
+               form.discountedPrice.isNotBlank()
+    }
+
+    fun resetUploadForm() {
+        _uploadFormState.value = UploadFormState()
+    }
+
+    fun createBoxFromForm() {
+        val form = _uploadFormState.value
+        if (isUploadFormValid()) {
+            createBox(
+                CreateBoxRequest(
+                    name = form.boxName,
+                    description = form.description,
+                    contentReference = form.contentReference,
+                    originalPrice = form.originalPrice.toIntOrNull() ?: 0,
+                    discountedPrice = form.discountedPrice.toIntOrNull() ?: 0,
+                    quantity = form.quantity,
+                    saleStartTime = form.saleTime,
+                    imageUrl = form.imageUrl
+                )
+            )
+        }
+    }
+
+    // Login Form State Management  
+    fun updateEmail(email: String) {
+        _loginFormState.value = _loginFormState.value.copy(email = email)
+    }
+
+    fun updatePassword(password: String) {
+        _loginFormState.value = _loginFormState.value.copy(password = password)
+    }
+
+    fun togglePasswordVisibility() {
+        _loginFormState.value = _loginFormState.value.copy(
+            passwordVisible = !_loginFormState.value.passwordVisible
+        )
+    }
+
+    fun isLoginFormValid(): Boolean {
+        val form = _loginFormState.value
+        return form.email.isNotBlank() && form.password.isNotBlank()
+    }
+
+    fun resetLoginForm() {
+        _loginFormState.value = LoginFormState()
+    }
+
+    fun loginWithForm() {
+        val form = _loginFormState.value
+        if (isLoginFormValid()) {
+            login(form.email, form.password)
+        }
     }
 }

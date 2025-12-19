@@ -41,9 +41,9 @@ fun ReservationsScreen(
     onNavigateToProfile: () -> Unit,
     viewModel: ReservationViewModel = koinViewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("進行中", "歷史紀錄")
-    val reservations by viewModel.reservations.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
+    val tabs = viewModel.getTabDisplayNames()
+    val filteredReservations by viewModel.filteredReservations.collectAsState()
 
     Scaffold(
         topBar = {
@@ -95,14 +95,14 @@ fun ReservationsScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(24.dp))
-                            .background(if (selectedTab == index) Gray900 else Gray100)
-                            .clickable { selectedTab = index }
+                            .background(if (selectedTab.index == index) Gray900 else Gray100)
+                            .clickable { viewModel.selectTabByIndex(index) }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = tab,
-                            color = if (selectedTab == index) White else Gray600,
+                            color = if (selectedTab.index == index) White else Gray600,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -116,11 +116,7 @@ fun ReservationsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val filteredReservations = if (selectedTab == 0) {
-                    viewModel.getActiveReservations()
-                } else {
-                    viewModel.getPastReservations()
-                }
+                // Filtered reservations are now managed by the ViewModel
 
                 items(filteredReservations) { reservation ->
                     ReservationCard(reservation = reservation)
@@ -135,7 +131,7 @@ fun ReservationsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (selectedTab == 0) "目前沒有進行中的預約" else "目前沒有歷史紀錄",
+                                text = if (selectedTab == com.example.mysterybox.ui.viewmodel.ReservationTab.ACTIVE) "目前沒有進行中的預約" else "目前沒有歷史紀錄",
                                 color = Gray500,
                                 fontSize = 14.sp
                             )
