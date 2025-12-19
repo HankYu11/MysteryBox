@@ -93,12 +93,28 @@ class MerchantViewModel(
         viewModelScope.launch {
             try {
                 if (tokenManager.isMerchantAuthenticated()) {
-                    // Since getCurrentMerchant is not fully implemented, skip for now
-                    // TODO: Implement getCurrentMerchant properly in MerchantRepository
+                    val merchant = tokenManager.getCurrentMerchant()
+                    val token = tokenManager.getMerchantToken()
+                    
+                    if (merchant != null && !token.isNullOrEmpty()) {
+                        _currentMerchant.value = merchant
+                        _uiState.value = MerchantUiState.LoggedIn(merchant)
+                        loadMerchantBoxes()
+                    } else {
+                        // Invalid stored data, clear tokens
+                        tokenManager.clearMerchantToken()
+                        _uiState.value = MerchantUiState.Idle
+                    }
+                } else {
                     _uiState.value = MerchantUiState.Idle
                 }
             } catch (e: Exception) {
-                // Fail silently and remain in idle state
+                // Error accessing stored data, clear and start fresh
+                try {
+                    tokenManager.clearMerchantToken()
+                } catch (clearException: Exception) {
+                    // Ignore clear errors
+                }
                 _uiState.value = MerchantUiState.Idle
             }
         }

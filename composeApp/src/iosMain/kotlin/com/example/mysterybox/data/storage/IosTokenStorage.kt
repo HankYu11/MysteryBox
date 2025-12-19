@@ -17,6 +17,16 @@ class IosTokenStorage : TokenStorage {
         userDefaults.synchronize()
     }
 
+    override suspend fun saveUserData(userData: String) {
+        userDefaults.setObject(userData, forKey = KEY_USER_DATA)
+        userDefaults.synchronize()
+    }
+
+    override suspend fun saveMerchantData(merchantData: String) {
+        userDefaults.setObject(merchantData, forKey = KEY_MERCHANT_DATA)
+        userDefaults.synchronize()
+    }
+
     override suspend fun getUserAccessToken(): String? {
         return userDefaults.stringForKey(KEY_USER_ACCESS_TOKEN)
     }
@@ -29,27 +39,41 @@ class IosTokenStorage : TokenStorage {
         return userDefaults.stringForKey(KEY_MERCHANT_TOKEN)
     }
 
+    override suspend fun getUserData(): String? {
+        return userDefaults.stringForKey(KEY_USER_DATA)
+    }
+
+    override suspend fun getMerchantData(): String? {
+        return userDefaults.stringForKey(KEY_MERCHANT_DATA)
+    }
+
     override suspend fun clearUserTokens() {
         userDefaults.removeObjectForKey(KEY_USER_ACCESS_TOKEN)
         userDefaults.removeObjectForKey(KEY_USER_REFRESH_TOKEN)
+        userDefaults.removeObjectForKey(KEY_USER_DATA)
         userDefaults.synchronize()
     }
 
     override suspend fun clearMerchantToken() {
         userDefaults.removeObjectForKey(KEY_MERCHANT_TOKEN)
+        userDefaults.removeObjectForKey(KEY_MERCHANT_DATA)
         userDefaults.synchronize()
     }
 
     override suspend fun clearAllTokens() {
         userDefaults.removeObjectForKey(KEY_USER_ACCESS_TOKEN)
         userDefaults.removeObjectForKey(KEY_USER_REFRESH_TOKEN)
+        userDefaults.removeObjectForKey(KEY_USER_DATA)
         userDefaults.removeObjectForKey(KEY_MERCHANT_TOKEN)
+        userDefaults.removeObjectForKey(KEY_MERCHANT_DATA)
         userDefaults.synchronize()
     }
 
     companion object {
         private const val KEY_USER_ACCESS_TOKEN = "user_access_token"
         private const val KEY_USER_REFRESH_TOKEN = "user_refresh_token"
+        private const val KEY_USER_DATA = "user_data"
         private const val KEY_MERCHANT_TOKEN = "merchant_token"
+        private const val KEY_MERCHANT_DATA = "merchant_data"
     }
 }

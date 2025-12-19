@@ -30,7 +30,9 @@ class MerchantRepositoryImpl(
             is Result.Success -> {
                 val merchantResponse = result.data
                 val merchant = merchantResponse.toDomain()
-                merchantResponse.token?.let { tokenManager.saveMerchantToken(it) }
+                merchantResponse.token?.let { token ->
+                    tokenManager.saveMerchantSession(token, merchant)
+                }
                 Result.Success(merchant)
             }
             is Result.Error -> result

@@ -23,10 +23,11 @@ class AuthRepositoryImpl(
                     // Backend verified the token and created session
                     val session = response.session.toDomain()
                     
-                    // Save backend's tokens (not LINE's token)
-                    tokenManager.saveUserTokens(
+                    // Save backend's tokens and user data (not LINE's token)
+                    tokenManager.saveUserSession(
                         response.session.accessToken,
-                        response.session.refreshToken
+                        response.session.refreshToken ?: "",
+                        session.user
                     )
                     
                     Result.Success(session)
@@ -47,9 +48,10 @@ class AuthRepositoryImpl(
                 val response = result.data
                 if (response.success && response.session != null) {
                     val session = response.session.toDomain()
-                    tokenManager.saveUserTokens(
+                    tokenManager.saveUserSession(
                         response.session.accessToken,
-                        response.session.refreshToken
+                        response.session.refreshToken ?: "",
+                        session.user
                     )
                     Result.Success(session)
                 } else {

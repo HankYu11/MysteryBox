@@ -34,16 +34,30 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 if (tokenManager.isUserAuthenticated()) {
-                    // Since getCurrentUser is not implemented, skip for now
-                    // TODO: Implement getCurrentUser in AuthRepository
+                    val user = tokenManager.getCurrentUser()
                     val accessToken = tokenManager.getAccessToken()
-                    if (!accessToken.isNullOrEmpty()) {
-                        // For now, just mark as idle until we implement proper user fetching
+                    
+                    if (user != null && !accessToken.isNullOrEmpty()) {
+                        _currentUser.value = user
+                        _authState.value = AuthState.Authenticated(
+                            user = user,
+                            accessToken = accessToken
+                        )
+                    } else {
+                        // Invalid stored data, clear tokens
+                        tokenManager.clearUserTokens()
                         _authState.value = AuthState.Idle
                     }
+                } else {
+                    _authState.value = AuthState.Idle
                 }
             } catch (e: Exception) {
-                // Fail silently and remain in idle state
+                // Error accessing stored data, clear and start fresh
+                try {
+                    tokenManager.clearUserTokens()
+                } catch (clearException: Exception) {
+                    // Ignore clear errors
+                }
                 _authState.value = AuthState.Idle
             }
         }
