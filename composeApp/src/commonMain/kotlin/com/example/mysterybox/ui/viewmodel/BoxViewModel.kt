@@ -36,6 +36,9 @@ class BoxViewModel(
     private val _selectedFilter = MutableStateFlow(BoxFilter.ALL)
     val selectedFilter: StateFlow<BoxFilter> = _selectedFilter.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
 
     private val _reservationState = MutableStateFlow<ReservationState>(ReservationState.Idle)
     val reservationState: StateFlow<ReservationState> = _reservationState.asStateFlow()
@@ -55,9 +58,14 @@ class BoxViewModel(
 
     fun loadBoxes() {
         viewModelScope.launch {
-            when (val result = boxRepository.getBoxes()) {
-                is Result.Success -> _boxes.value = result.data
-                is Result.Error -> _boxes.value = emptyList()
+            _isRefreshing.value = true
+            try {
+                when (val result = boxRepository.getBoxes()) {
+                    is Result.Success -> _boxes.value = result.data
+                    is Result.Error -> _boxes.value = emptyList()
+                }
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

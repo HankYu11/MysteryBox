@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +45,14 @@ fun HomeScreen(
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val filteredBoxes by viewModel.filteredBoxes.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    // Refresh data when screen resumes
+    LaunchedEffect(Unit) {
+        viewModel.loadBoxes()
+    }
 
     val selectedTab = when (selectedFilter) {
         BoxFilter.ALL -> 0
@@ -62,12 +72,18 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Gray50)
-                .padding(paddingValues)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.loadBoxes() },
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize()
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Gray50)
+                    .padding(paddingValues)
+            ) {
             // Header
             Row(
                 modifier = Modifier
@@ -175,6 +191,7 @@ fun HomeScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+            }
             }
         }
     }
