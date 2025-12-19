@@ -38,22 +38,22 @@ fun ProfileScreen(
 ) {
     val authState by authViewModel.authState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("個人資料") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = White,
-                    titleContentColor = Gray900
-                )
-            )
-        },
-        containerColor = Gray50
-    ) { paddingValues ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Gray50)
+    ) {
+        Text(
+            text = "個人資料",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Gray900,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        )
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
             when (val state = authState) {
@@ -63,8 +63,6 @@ fun ProfileScreen(
                         displayName = state.user.displayName,
                         pictureUrl = state.user.pictureUrl
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
 
                     // User Info Section
                     Card(

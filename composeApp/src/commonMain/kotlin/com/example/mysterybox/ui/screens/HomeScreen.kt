@@ -42,8 +42,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun HomeScreen(
     onBoxClick: (String) -> Unit,
-    onNavigateToReservations: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     viewModel: BoxViewModel = koinViewModel()
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -65,44 +63,26 @@ fun HomeScreen(
     }
     val tabs = listOf("全部", "可預約", "即將售罄", "已售完")
 
-    Scaffold(
-    ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.loadBoxes() },
-            state = pullToRefreshState,
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.loadBoxes() },
+        state = pullToRefreshState,
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Gray50)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
             // Header
-            Row(
+            Text(
+                text = "今日驚喜箱",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Gray900,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.width(24.dp))
-                Text(
-                    text = "今日驚喜箱",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Gray900
-                )
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Filter",
-                    tint = Gray600,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+            )
 
             // Filter Tabs
             Row(
@@ -186,7 +166,6 @@ fun HomeScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
             }
         }
     }

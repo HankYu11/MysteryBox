@@ -1,6 +1,7 @@
 package com.example.mysterybox
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,7 +118,9 @@ private fun AppContent() {
             NavHost(
                 navController = navController,
                 startDestination = Welcome,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
             composable<Welcome> {
                 WelcomeScreen(
@@ -149,12 +152,6 @@ private fun AppContent() {
                     onBoxClick = { boxId ->
                         navController.navigate(BoxDetail(boxId))
                     },
-                    onNavigateToReservations = {
-                        navController.navigate(MyReservations)
-                    },
-                    onNavigateToProfile = {
-                        navController.navigate(Profile)
-                    }
                 )
             }
 
@@ -172,19 +169,7 @@ private fun AppContent() {
             }
 
             composable<MyReservations> {
-                ReservationsScreen(
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onNavigateToHome = {
-                        navController.navigate(Home) {
-                            popUpTo(Home) { inclusive = true }
-                        }
-                    },
-                    onNavigateToProfile = {
-                        navController.navigate(Profile)
-                    }
-                )
+                ReservationsScreen()
             }
 
             composable<Profile> {

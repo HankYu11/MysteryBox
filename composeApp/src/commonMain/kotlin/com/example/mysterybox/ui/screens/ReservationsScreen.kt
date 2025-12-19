@@ -37,9 +37,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationsScreen(
-    onBackClick: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     viewModel: ReservationViewModel = koinViewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
@@ -56,94 +53,93 @@ fun ReservationsScreen(
                 snackbarHostState.showSnackbar("預約已成功取消")
                 viewModel.resetCancelReservationState()
             }
+
             is com.example.mysterybox.ui.viewmodel.CancelReservationState.Error -> {
-                val errorState = cancelReservationState as com.example.mysterybox.ui.viewmodel.CancelReservationState.Error
+                val errorState =
+                    cancelReservationState as com.example.mysterybox.ui.viewmodel.CancelReservationState.Error
                 snackbarHostState.showSnackbar("取消失敗: ${errorState.message}")
                 viewModel.resetCancelReservationState()
             }
+
             else -> {}
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "我的預約",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = White
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Gray50)
-                .padding(paddingValues)
-        ) {
-            // Tab Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Gray50)
+    ) {
+        Text(
+            text = "我的預約",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = Gray900,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        )
+
+        Box {
+            SnackbarHost(snackbarHostState)
+
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                tabs.forEachIndexed { index, tab ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(if (selectedTab.index == index) Gray900 else Gray100)
-                            .clickable { viewModel.selectTabByIndex(index) }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = tab,
-                            color = if (selectedTab.index == index) White else Gray600,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            // Reservations List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Filtered reservations are now managed by the ViewModel
-
-                items(filteredReservations) { reservation ->
-                    ReservationCard(
-                        reservation = reservation,
-                        onCancelClick = { viewModel.cancelReservation(reservation.id) },
-                        isLoading = cancelReservationState is com.example.mysterybox.ui.viewmodel.CancelReservationState.Loading
-                    )
-                }
-
-                if (filteredReservations.isEmpty()) {
-                    item {
+                // Tab Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(White)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    tabs.forEachIndexed { index, tab ->
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
+                                .weight(1f)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(if (selectedTab.index == index) Gray900 else Gray100)
+                                .clickable { viewModel.selectTabByIndex(index) }
+                                .padding(vertical = 12.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (selectedTab == com.example.mysterybox.ui.viewmodel.ReservationTab.ACTIVE) "目前沒有進行中的預約" else "目前沒有歷史紀錄",
-                                color = Gray500,
-                                fontSize = 14.sp
+                                text = tab,
+                                color = if (selectedTab.index == index) White else Gray600,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
                             )
+                        }
+                    }
+                }
+
+                // Reservations List
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(filteredReservations) { reservation ->
+                        ReservationCard(
+                            reservation = reservation,
+                            onCancelClick = { viewModel.cancelReservation(reservation.id) },
+                            isLoading = cancelReservationState is com.example.mysterybox.ui.viewmodel.CancelReservationState.Loading
+                        )
+                    }
+
+                    if (filteredReservations.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (selectedTab == com.example.mysterybox.ui.viewmodel.ReservationTab.ACTIVE) "目前沒有進行中的預約" else "目前沒有歷史紀錄",
+                                    color = Gray500,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -151,6 +147,7 @@ fun ReservationsScreen(
         }
     }
 }
+
 
 @Composable
 fun ReservationCard(
@@ -354,6 +351,7 @@ fun ReservationCard(
                         )
                     }
                 }
+
                 ReservationStatus.RESERVED -> {
                     Row(
                         modifier = Modifier
@@ -372,10 +370,12 @@ fun ReservationCard(
                                 contentColor = if (isLoading) Gray400 else Gray600
                             ),
                             border = ButtonDefaults.outlinedButtonBorder(enabled = !isLoading).copy(
-                                brush = Brush.horizontalGradient(listOf(
-                                    if (isLoading) Gray200 else Gray300,
-                                    if (isLoading) Gray200 else Gray300
-                                ))
+                                brush = Brush.horizontalGradient(
+                                    listOf(
+                                        if (isLoading) Gray200 else Gray300,
+                                        if (isLoading) Gray200 else Gray300
+                                    )
+                                )
                             ),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -416,6 +416,7 @@ fun ReservationCard(
                         }
                     }
                 }
+
                 ReservationStatus.PICKUP_MISSED -> {
                     Column(
                         modifier = Modifier
@@ -455,7 +456,8 @@ fun ReservationCard(
                         }
                     }
                 }
-                else -> { }
+
+                else -> {}
             }
         }
     }
