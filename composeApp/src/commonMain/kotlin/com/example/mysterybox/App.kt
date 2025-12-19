@@ -15,8 +15,7 @@ import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import com.example.mysterybox.auth.rememberLineSdkLauncher
-import com.example.mysterybox.data.model.AuthState
-import com.example.mysterybox.data.repository.AuthRepository
+import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.di.appModules
 import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
@@ -53,9 +52,8 @@ private fun AppContent() {
         
         // Setup LINE SDK launcher
         val lineSdkLauncher = rememberLineSdkLauncher()
-        val authRepository: AuthRepository = koinInject()
         LaunchedEffect(lineSdkLauncher) {
-            authRepository.setOAuthLauncher(lineSdkLauncher)
+            authViewModel.setOAuthLauncher(lineSdkLauncher)
         }
 
         // Navigate on successful auth
