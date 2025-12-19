@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.navigationBarsPadding
+import com.example.mysterybox.ui.utils.safeDrawingPadding
+import com.example.mysterybox.ui.utils.statusBarsPadding
 import com.example.mysterybox.ui.viewmodel.BoxFilter
 import com.example.mysterybox.ui.viewmodel.BoxViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -76,20 +79,21 @@ fun HomeScreen(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.loadBoxes() },
             state = pullToRefreshState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Gray50)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Gray50)
                     .padding(paddingValues)
             ) {
             // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(White)
-                    .padding(16.dp),
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -112,7 +116,6 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(White)
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

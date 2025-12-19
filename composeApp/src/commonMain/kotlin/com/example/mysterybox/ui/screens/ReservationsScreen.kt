@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.Reservation
 import com.example.mysterybox.data.model.ReservationStatus
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.safeDrawingPadding
 import com.example.mysterybox.ui.viewmodel.ReservationViewModel
 import org.koin.compose.viewmodel.koinViewModel
 

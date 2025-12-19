@@ -3,6 +3,11 @@ package com.example.mysterybox.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 private val LightColorScheme = lightColorScheme(
     primary = Green500,
@@ -30,11 +35,27 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
+expect fun ConfigureSystemBars(
+    statusBarColor: Color = Color.Transparent,
+    navigationBarColor: Color = Color.Transparent,
+    darkIcons: Boolean = true
+)
+
+@Composable
 fun MysteryBoxTheme(
     content: @Composable () -> Unit
 ) {
+    val colorScheme = LightColorScheme
+    
+    // Configure system bars for edge-to-edge
+    ConfigureSystemBars(
+        statusBarColor = Color.Transparent,
+        navigationBarColor = Color.Transparent,
+        darkIcons = true // Dark icons work well with light theme
+    )
+    
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         content = content
     )
 }

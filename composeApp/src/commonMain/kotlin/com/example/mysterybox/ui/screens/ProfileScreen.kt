@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.safeDrawingPadding
 import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel
 

@@ -22,6 +22,7 @@ import com.example.mysterybox.di.isKoinStarted
 import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
 import com.example.mysterybox.ui.theme.MysteryBoxTheme
+import com.example.mysterybox.ui.utils.safeDrawingPadding
 import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.CreateBoxRequest
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.imePadding
 import com.example.mysterybox.ui.viewmodel.CreateBoxUiState
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -94,6 +95,7 @@ fun UploadBoxScreen(
                 .fillMaxSize()
                 .background(White)
                 .padding(paddingValues)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {

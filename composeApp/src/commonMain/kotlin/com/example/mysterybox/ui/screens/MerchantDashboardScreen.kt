@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.mysterybox.data.model.MerchantOrderStatus
 import com.example.mysterybox.data.model.MerchantOrderSummary
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.safeDrawingPadding
 import com.example.mysterybox.data.model.MerchantDashboard
 import com.example.mysterybox.ui.viewmodel.DashboardUiState
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel

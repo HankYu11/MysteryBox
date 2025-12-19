@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mysterybox.ui.theme.*
+import com.example.mysterybox.ui.utils.imePadding
 import com.example.mysterybox.ui.viewmodel.MerchantUiState
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -79,6 +80,7 @@ fun MerchantLoginScreen(
                 .fillMaxSize()
                 .background(White)
                 .padding(paddingValues)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
