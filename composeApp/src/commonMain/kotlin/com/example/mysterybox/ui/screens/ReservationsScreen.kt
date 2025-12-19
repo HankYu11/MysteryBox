@@ -44,8 +44,28 @@ fun ReservationsScreen(
     val selectedTab by viewModel.selectedTab.collectAsState()
     val tabs = viewModel.getTabDisplayNames()
     val filteredReservations by viewModel.filteredReservations.collectAsState()
+    val cancelReservationState by viewModel.cancelReservationState.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Handle cancel reservation state
+    LaunchedEffect(cancelReservationState) {
+        when (cancelReservationState) {
+            is com.example.mysterybox.ui.viewmodel.CancelReservationState.Success -> {
+                snackbarHostState.showSnackbar("預約已成功取消")
+                viewModel.resetCancelReservationState()
+            }
+            is com.example.mysterybox.ui.viewmodel.CancelReservationState.Error -> {
+                val errorState = cancelReservationState as com.example.mysterybox.ui.viewmodel.CancelReservationState.Error
+                snackbarHostState.showSnackbar("取消失敗: ${errorState.message}")
+                viewModel.resetCancelReservationState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -119,7 +139,11 @@ fun ReservationsScreen(
                 // Filtered reservations are now managed by the ViewModel
 
                 items(filteredReservations) { reservation ->
-                    ReservationCard(reservation = reservation)
+                    ReservationCard(
+                        reservation = reservation,
+                        onCancelClick = { viewModel.cancelReservation(reservation.id) },
+                        isLoading = cancelReservationState is com.example.mysterybox.ui.viewmodel.CancelReservationState.Loading
+                    )
                 }
 
                 if (filteredReservations.isEmpty()) {
@@ -145,7 +169,9 @@ fun ReservationsScreen(
 
 @Composable
 fun ReservationCard(
-    reservation: Reservation
+    reservation: Reservation,
+    onCancelClick: () -> Unit = {},
+    isLoading: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -352,28 +378,40 @@ fun ReservationCard(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { },
+                            onClick = onCancelClick,
+                            enabled = !isLoading,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(44.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Gray600
+                                contentColor = if (isLoading) Gray400 else Gray600
                             ),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                                brush = Brush.horizontalGradient(listOf(Gray300, Gray300))
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = !isLoading).copy(
+                                brush = Brush.horizontalGradient(listOf(
+                                    if (isLoading) Gray200 else Gray300,
+                                    if (isLoading) Gray200 else Gray300
+                                ))
                             ),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "取消",
-                                fontSize = 14.sp
-                            )
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Gray400,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "取消",
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                         Button(
                             onClick = { },

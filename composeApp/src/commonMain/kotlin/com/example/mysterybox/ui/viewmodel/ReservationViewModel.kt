@@ -19,6 +19,13 @@ sealed class ReservationUiState {
     data class Error(val message: String) : ReservationUiState()
 }
 
+sealed class CancelReservationState {
+    data object Idle : CancelReservationState()
+    data object Loading : CancelReservationState()
+    data object Success : CancelReservationState()
+    data class Error(val message: String) : CancelReservationState()
+}
+
 enum class ReservationTab(val index: Int, val displayName: String) {
     ACTIVE(0, "進行中"),
     HISTORY(1, "歷史紀錄")
@@ -37,6 +44,9 @@ class ReservationViewModel(
 
     private val _filteredReservations = MutableStateFlow<List<Reservation>>(emptyList())
     val filteredReservations: StateFlow<List<Reservation>> = _filteredReservations.asStateFlow()
+
+    private val _cancelReservationState = MutableStateFlow<CancelReservationState>(CancelReservationState.Idle)
+    val cancelReservationState: StateFlow<CancelReservationState> = _cancelReservationState.asStateFlow()
 
     init {
         loadReservations()
@@ -71,9 +81,23 @@ class ReservationViewModel(
 
     fun cancelReservation(id: String) {
         viewModelScope.launch {
-            when (reservationRepository.cancelReservation(id)) {
-                is Result.Success -> loadReservations()
-                is Result.Error -> { /* Could add error handling here */ }
+            _cancelReservationState.value = CancelReservationState.Loading
+            try {
+                when (val result = reservationRepository.cancelReservation(id)) {
+                    is Result.Success -> {
+                        _cancelReservationState.value = CancelReservationState.Success
+                        loadReservations() // Refresh the list to show updated status
+                    }
+                    is Result.Error -> {
+                        _cancelReservationState.value = CancelReservationState.Error(
+                            result.error.toMessage()
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _cancelReservationState.value = CancelReservationState.Error(
+                    e.message ?: "取消預約失敗"
+                )
             }
         }
     }
@@ -98,5 +122,9 @@ class ReservationViewModel(
 
     fun getTabDisplayNames(): List<String> {
         return ReservationTab.values().map { it.displayName }
+    }
+
+    fun resetCancelReservationState() {
+        _cancelReservationState.value = CancelReservationState.Idle
     }
 }
