@@ -1,40 +1,36 @@
 package com.example.mysterybox.data.network
 
-class TokenManager {
-    private var accessToken: String? = null
-    private var refreshToken: String? = null
-    private var merchantToken: String? = null
+import com.example.mysterybox.data.storage.TokenStorage
 
-    fun saveUserTokens(accessToken: String, refreshToken: String) {
-        this.accessToken = accessToken
-        this.refreshToken = refreshToken
+class TokenManager(private val tokenStorage: TokenStorage) {
+    
+    suspend fun saveUserTokens(accessToken: String, refreshToken: String) {
+        tokenStorage.saveUserTokens(accessToken, refreshToken)
     }
 
-    fun saveMerchantToken(token: String) {
-        this.merchantToken = token
+    suspend fun saveMerchantToken(token: String) {
+        tokenStorage.saveMerchantToken(token)
     }
 
-    fun getAccessToken(): String? = accessToken
+    suspend fun getAccessToken(): String? = tokenStorage.getUserAccessToken()
 
-    fun getRefreshToken(): String? = refreshToken
+    suspend fun getRefreshToken(): String? = tokenStorage.getUserRefreshToken()
 
-    fun getMerchantToken(): String? = merchantToken
+    suspend fun getMerchantToken(): String? = tokenStorage.getMerchantToken()
 
-    fun clearUserTokens() {
-        accessToken = null
-        refreshToken = null
+    suspend fun clearUserTokens() {
+        tokenStorage.clearUserTokens()
     }
 
-    fun clearMerchantToken() {
-        merchantToken = null
+    suspend fun clearMerchantToken() {
+        tokenStorage.clearMerchantToken()
     }
 
-    fun clearAllTokens() {
-        clearUserTokens()
-        clearMerchantToken()
+    suspend fun clearAllTokens() {
+        tokenStorage.clearAllTokens()
     }
 
-    fun isUserAuthenticated(): Boolean = accessToken != null
+    suspend fun isUserAuthenticated(): Boolean = tokenStorage.getUserAccessToken() != null
 
-    fun isMerchantAuthenticated(): Boolean = merchantToken != null
+    suspend fun isMerchantAuthenticated(): Boolean = tokenStorage.getMerchantToken() != null
 }

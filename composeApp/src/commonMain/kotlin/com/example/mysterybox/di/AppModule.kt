@@ -23,7 +23,7 @@ import org.koin.dsl.module
 
 val networkModule = module {
     single { createHttpClient() }
-    single { TokenManager() }
+    single { TokenManager(get()) }
     single { MysteryBoxApiService(get(), get()) }
 }
 
@@ -42,6 +42,7 @@ val viewModelModule = module {
 }
 
 val appModules = listOf(
+    platformModule,
     networkModule,
     repositoryModule,
     viewModelModule
