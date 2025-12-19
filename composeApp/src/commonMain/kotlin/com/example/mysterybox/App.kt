@@ -10,6 +10,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.request.crossfade
 import com.example.mysterybox.auth.rememberLineSdkLauncher
 import com.example.mysterybox.data.model.AuthState
 import com.example.mysterybox.data.repository.AuthRepository
@@ -26,6 +30,13 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 @Preview
 fun App() {
+    // Configure Coil's singleton ImageLoader
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .crossfade(true)
+            .build()
+    }
+    
     KoinApplication(application = {
         modules(appModules)
     }) {
@@ -95,7 +106,7 @@ private fun AppContent() {
                         navController.navigate(MyReservations)
                     },
                     onNavigateToProfile = {
-                        // Profile not implemented yet
+                        navController.navigate(Profile)
                     }
                 )
             }
@@ -124,7 +135,20 @@ private fun AppContent() {
                         }
                     },
                     onNavigateToProfile = {
-                        // Profile not implemented yet
+                        navController.navigate(Profile)
+                    }
+                )
+            }
+
+            composable<Profile> {
+                ProfileScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate(Login) {
+                            popUpTo(Welcome) { inclusive = true }
+                        }
                     }
                 )
             }
