@@ -10,9 +10,8 @@ import com.example.mysterybox.data.model.Result
 
 interface MerchantRepository {
     suspend fun login(request: MerchantLoginRequest): Result<Merchant>
-    fun logout()
-    fun getCurrentMerchant(): Merchant?
-    fun isLoggedIn(): Boolean
+    suspend fun logout(): Result<Unit>
+    suspend fun getCurrentMerchant(): Result<Merchant>
     suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox>
     suspend fun getMerchantBoxes(): Result<List<MysteryBox>>
     suspend fun getDashboard(): Result<MerchantDashboard>

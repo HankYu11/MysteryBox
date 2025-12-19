@@ -9,6 +9,7 @@ import com.example.mysterybox.data.model.MerchantLoginRequest
 import com.example.mysterybox.data.model.MerchantOrder
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
+import com.example.mysterybox.data.network.TokenManager
 import com.example.mysterybox.data.repository.MerchantRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,11 +54,15 @@ enum class OrderTab {
 }
 
 class MerchantViewModel(
-    private val merchantRepository: MerchantRepository
+    private val merchantRepository: MerchantRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MerchantUiState>(MerchantUiState.Idle)
     val uiState: StateFlow<MerchantUiState> = _uiState.asStateFlow()
+
+    private val _currentMerchant = MutableStateFlow<Merchant?>(null)
+    val currentMerchant: StateFlow<Merchant?> = _currentMerchant.asStateFlow()
 
     private val _createBoxState = MutableStateFlow<CreateBoxUiState>(CreateBoxUiState.Idle)
     val createBoxState: StateFlow<CreateBoxUiState> = _createBoxState.asStateFlow()
@@ -81,10 +86,25 @@ class MerchantViewModel(
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     init {
-        // Check if already logged in
-        merchantRepository.getCurrentMerchant()?.let { merchant ->
-            _uiState.value = MerchantUiState.LoggedIn(merchant)
-            loadMerchantBoxes()
+        checkMerchantAuth()
+    }
+    
+    private fun checkMerchantAuth() {
+        viewModelScope.launch {
+            if (tokenManager.isMerchantAuthenticated()) {
+                when (val result = merchantRepository.getCurrentMerchant()) {
+                    is Result.Success -> {
+                        _currentMerchant.value = result.data
+                        _uiState.value = MerchantUiState.LoggedIn(result.data)
+                        loadMerchantBoxes()
+                    }
+                    is Result.Error -> {
+                        // Token invalid, clear state
+                        tokenManager.clearMerchantToken()
+                        _uiState.value = MerchantUiState.Idle
+                    }
+                }
+            }
         }
     }
 
@@ -94,6 +114,7 @@ class MerchantViewModel(
 
             when (val result = merchantRepository.login(MerchantLoginRequest(email, password))) {
                 is Result.Success -> {
+                    _currentMerchant.value = result.data
                     _uiState.value = MerchantUiState.LoggedIn(result.data)
                     loadMerchantBoxes()
                 }
@@ -105,9 +126,12 @@ class MerchantViewModel(
     }
 
     fun logout() {
-        merchantRepository.logout()
-        _uiState.value = MerchantUiState.Idle
-        _merchantBoxes.value = emptyList()
+        viewModelScope.launch {
+            merchantRepository.logout()
+            _currentMerchant.value = null
+            _uiState.value = MerchantUiState.Idle
+            _merchantBoxes.value = emptyList()
+        }
     }
 
     fun createBox(request: CreateBoxRequest) {
@@ -149,9 +173,9 @@ class MerchantViewModel(
         }
     }
 
-    fun isLoggedIn(): Boolean = merchantRepository.isLoggedIn()
+    fun isLoggedIn(): Boolean = _currentMerchant.value != null
 
-    fun getCurrentMerchant(): Merchant? = merchantRepository.getCurrentMerchant()
+    fun getCurrentMerchant(): Merchant? = _currentMerchant.value
 
     // Dashboard methods
     fun loadDashboard() {

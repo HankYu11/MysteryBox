@@ -6,6 +6,7 @@ sealed class ApiError {
     data class AuthenticationError(val message: String) : ApiError()
     data class NotFoundError(val message: String) : ApiError()
     data class ValidationError(val message: String) : ApiError()
+    data class NotImplemented(val message: String) : ApiError()
     data object UnknownError : ApiError()
 
     fun toMessage(): String = when (this) {
@@ -14,6 +15,7 @@ sealed class ApiError {
         is AuthenticationError -> message
         is NotFoundError -> message
         is ValidationError -> message
+        is NotImplemented -> message
         is UnknownError -> "Unknown error occurred"
     }
 }

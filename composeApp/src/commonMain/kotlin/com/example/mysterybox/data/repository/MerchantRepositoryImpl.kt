@@ -24,14 +24,12 @@ class MerchantRepositoryImpl(
     private val apiService: MysteryBoxApiService,
     private val tokenManager: TokenManager
 ) : MerchantRepository {
-    private var currentMerchant: Merchant? = null
 
     override suspend fun login(request: MerchantLoginRequest): Result<Merchant> {
         return when (val result = apiService.merchantLogin(request.email, request.password)) {
             is Result.Success -> {
                 val merchantResponse = result.data
                 val merchant = merchantResponse.toDomain()
-                currentMerchant = merchant
                 merchantResponse.token?.let { tokenManager.saveMerchantToken(it) }
                 Result.Success(merchant)
             }
@@ -39,17 +37,30 @@ class MerchantRepositoryImpl(
         }
     }
 
-    override fun logout() {
-        currentMerchant = null
-        tokenManager.clearMerchantToken()
+    override suspend fun logout(): Result<Unit> {
+        return try {
+            // Call logout API if needed
+            tokenManager.clearMerchantToken()
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            tokenManager.clearMerchantToken() // Clear token even if API call fails
+            Result.Success(Unit)
+        }
     }
 
-    override fun getCurrentMerchant(): Merchant? = currentMerchant
-
-    override fun isLoggedIn(): Boolean = tokenManager.isMerchantAuthenticated()
+    override suspend fun getCurrentMerchant(): Result<Merchant> {
+        // This would typically fetch from server or decode JWT token
+        // For now, return error if no token exists
+        return if (tokenManager.isMerchantAuthenticated()) {
+            // In a real implementation, you'd decode the JWT or call an API
+            Result.Error(ApiError.NotImplemented("getCurrentMerchant not implemented - needs JWT decode or API call"))
+        } else {
+            Result.Error(ApiError.AuthenticationError("Not authenticated"))
+        }
+    }
 
     override suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox> {
-        if (!isLoggedIn()) {
+        if (!tokenManager.isMerchantAuthenticated()) {
             return Result.Error(ApiError.AuthenticationError("請先登入"))
         }
 

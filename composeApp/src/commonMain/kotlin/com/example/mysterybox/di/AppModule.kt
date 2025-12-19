@@ -37,7 +37,7 @@ val repositoryModule = module {
 val viewModelModule = module {
     viewModelOf(::AuthViewModel)
     viewModel { BoxViewModel(get(), get()) }
-    viewModelOf(::MerchantViewModel)
+    viewModel { MerchantViewModel(get(), get()) }
     viewModelOf(::ReservationViewModel)
 }
 
