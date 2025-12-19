@@ -14,6 +14,12 @@ data class LineAuthRequestDto(
 )
 
 @Serializable
+data class LineTokenVerifyRequest(
+    @SerialName("line_access_token")
+    val lineAccessToken: String
+)
+
+@Serializable
 data class AuthResponseDto(
     val success: Boolean,
     val session: SessionInfoDto? = null,

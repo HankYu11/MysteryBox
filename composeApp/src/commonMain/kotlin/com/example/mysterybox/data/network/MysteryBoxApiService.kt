@@ -55,6 +55,18 @@ class MysteryBoxApiService(
             }
         }
 
+    /**
+     * Verify LINE access token and create session
+     * Client sends LINE access token, backend verifies with LINE API and creates session
+     */
+    suspend fun verifyLineAccessToken(lineAccessToken: String): Result<AuthResponseDto> =
+        safeApiCall {
+            httpClient.post("${ApiConfig.BASE_URL}${ApiConfig.AUTH_LINE_VERIFY}") {
+                contentType(ContentType.Application.Json)
+                setBody(LineTokenVerifyRequest(lineAccessToken = lineAccessToken))
+            }
+        }
+
     suspend fun refreshToken(refreshToken: String): Result<RefreshTokenResponseDto> =
         safeApiCall {
             httpClient.post("${ApiConfig.BASE_URL}${ApiConfig.AUTH_REFRESH}") {

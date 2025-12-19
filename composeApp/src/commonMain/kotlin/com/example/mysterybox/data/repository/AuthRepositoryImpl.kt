@@ -65,24 +65,36 @@ class AuthRepositoryImpl(
      * Send LINE access token to backend for verification and session creation
      */
     private suspend fun loginWithLineAccessToken(lineAccessToken: String, lineUserId: String, displayName: String) {
-        // TODO: Create a new backend endpoint to accept LINE access token
-        // For now, save the token and create a temporary user
-        // Backend should verify the token with LINE API and create proper session
+        _authState.value = AuthState.Loading
         
-        tokenManager.saveUserTokens(lineAccessToken, "temp_refresh_token")
-        
-        currentUser = User(
-            id = lineUserId,
-            lineUserId = lineUserId,
-            displayName = displayName,
-            pictureUrl = null,
-            createdAt = null
-        )
-        
-        _authState.value = AuthState.Authenticated(
-            user = currentUser!!,
-            accessToken = lineAccessToken
-        )
+        // Send LINE access token to backend for verification
+        when (val result = apiService.verifyLineAccessToken(lineAccessToken)) {
+            is Result.Success -> {
+                val response = result.data
+                if (response.success && response.session != null) {
+                    // Backend verified the token and created session
+                    val session = response.session.toDomain()
+                    
+                    // Save backend's tokens (not LINE's token)
+                    tokenManager.saveUserTokens(
+                        response.session.accessToken,
+                        response.session.refreshToken
+                    )
+                    
+                    currentUser = session.user
+                    _authState.value = AuthState.Authenticated(
+                        user = session.user,
+                        accessToken = session.accessToken
+                    )
+                } else {
+                    val error = response.error ?: "Authentication failed"
+                    _authState.value = AuthState.Error(error)
+                }
+            }
+            is Result.Error -> {
+                _authState.value = AuthState.Error("Failed to verify with server: ${result.error.toMessage()}")
+            }
+        }
     }
 
     override suspend fun loginWithLine(code: String, state: String?): Result<AuthSession> {

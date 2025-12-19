@@ -11,7 +11,8 @@ object ApiConfig {
 
     // Auth endpoints
     const val AUTH_LINE = "/api/auth/line"
-    const val AUTH_REDIRECT = "/api/auth/line/callback"  // Backend handles LINE callback
+    const val AUTH_LINE_VERIFY = "/api/auth/line/verify-token"  // Verify LINE access token (LINE SDK flow)
+    const val AUTH_REDIRECT = "/api/auth/line/callback"  // Backend handles LINE callback (Web OAuth flow)
     const val AUTH_REFRESH = "/api/auth/refresh"
     const val AUTH_LOGOUT = "/api/auth/logout"
 
