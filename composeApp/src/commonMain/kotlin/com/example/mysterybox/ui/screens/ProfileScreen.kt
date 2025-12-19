@@ -33,7 +33,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    onBackClick: () -> Unit,
     onNavigateToLogin: () -> Unit,
     authViewModel: AuthViewModel = koinViewModel()
 ) {
@@ -43,11 +42,6 @@ fun ProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("個人資料") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = White,
                     titleContentColor = Gray900

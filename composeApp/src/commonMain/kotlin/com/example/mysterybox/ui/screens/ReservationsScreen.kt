@@ -75,25 +75,9 @@ fun ReservationsScreen(
                         fontWeight = FontWeight.Bold
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = White
                 )
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                selectedIndex = 1,
-                onBoxClick = onNavigateToHome,
-                onOrdersClick = { },
-                onProfileClick = onNavigateToProfile
             )
         }
     ) { paddingValues ->

@@ -66,14 +66,6 @@ fun HomeScreen(
     val tabs = listOf("全部", "可預約", "即將售罄", "已售完")
 
     Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                selectedIndex = 0,
-                onBoxClick = { },
-                onOrdersClick = onNavigateToReservations,
-                onProfileClick = onNavigateToProfile
-            )
-        }
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,

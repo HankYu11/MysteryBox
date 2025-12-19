@@ -1,11 +1,13 @@
 package com.example.mysterybox
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -75,11 +77,48 @@ private fun AppContent() {
             }
         }
 
-        NavHost(
-            navController = navController,
-            startDestination = Welcome,
-            modifier = Modifier.fillMaxSize()
-        ) {
+        // Track current destination for bottom navigation
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        
+        // Determine if current screen should show bottom navigation
+        val showBottomBar = when {
+            currentRoute?.contains("Home") == true -> true
+            currentRoute?.contains("MyReservations") == true -> true  
+            currentRoute?.contains("Profile") == true -> true
+            else -> false
+        }
+
+        Scaffold(
+            bottomBar = {
+                if (showBottomBar) {
+                    BottomNavigationBar(
+                        selectedIndex = when {
+                            currentRoute?.contains("Home") == true -> 0
+                            currentRoute?.contains("MyReservations") == true -> 1
+                            currentRoute?.contains("Profile") == true -> 2
+                            else -> 0
+                        },
+                        onBoxClick = {
+                            navController.navigate(Home) {
+                                popUpTo(Home) { inclusive = true }
+                            }
+                        },
+                        onOrdersClick = {
+                            navController.navigate(MyReservations)
+                        },
+                        onProfileClick = {
+                            navController.navigate(Profile)
+                        }
+                    )
+                }
+            }
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = Welcome,
+                modifier = Modifier.fillMaxSize()
+            ) {
             composable<Welcome> {
                 WelcomeScreen(
                     onStartClick = {
@@ -150,9 +189,6 @@ private fun AppContent() {
 
             composable<Profile> {
                 ProfileScreen(
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
                     onNavigateToLogin = {
                         navController.navigate(Login) {
                             popUpTo(Welcome) { inclusive = true }
@@ -211,6 +247,7 @@ private fun AppContent() {
                         navController.popBackStack()
                     }
                 )
+            }
             }
         }
     }
