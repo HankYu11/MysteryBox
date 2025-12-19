@@ -14,9 +14,7 @@ class AuthViewModel(
     val authState: StateFlow<AuthState> = authRepository.authState
 
     fun startLineLogin() {
-        viewModelScope.launch {
-            authRepository.loginWithLine()
-        }
+        authRepository.startLineLogin()
     }
 
     fun logout() {

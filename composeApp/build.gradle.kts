@@ -96,5 +96,7 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    // LINE SDK for Android (must be in dependencies block for proper resolution)
+    add("androidMainImplementation", "com.linecorp.linesdk:linesdk:5.9.0")
 }
 

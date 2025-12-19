@@ -9,7 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 interface AuthRepository {
     val authState: StateFlow<AuthState>
 
-    suspend fun loginWithLine(): Result<AuthSession>
+    fun setOAuthLauncher(launcher: Any)
+    
+    fun startLineLogin()
+    
+    suspend fun loginWithLine(code: String, state: String?): Result<AuthSession>
 
     fun getCurrentUser(): User?
 
