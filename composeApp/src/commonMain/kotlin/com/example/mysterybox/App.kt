@@ -17,6 +17,8 @@ import coil3.request.crossfade
 import com.example.mysterybox.auth.rememberLineSdkLauncher
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.di.appModules
+import com.example.mysterybox.di.initializeKoin
+import com.example.mysterybox.di.isKoinStarted
 import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
 import com.example.mysterybox.ui.theme.MysteryBoxTheme
@@ -36,10 +38,17 @@ fun App() {
             .build()
     }
     
-    KoinApplication(application = {
-        modules(appModules)
-    }) {
+    // Initialize Koin based on platform
+    if (isKoinStarted()) {
+        // Koin already started (Android with Application class)
         AppContent()
+    } else {
+        // Start Koin for other platforms (iOS)
+        KoinApplication(application = {
+            modules(appModules)
+        }) {
+            AppContent()
+        }
     }
 }
 
