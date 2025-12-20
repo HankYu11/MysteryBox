@@ -3,17 +3,20 @@ package com.example.mysterybox.data.storage
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 
 class AndroidTokenStorage(private val context: Context) : TokenStorage {
-    
+
     private val sharedPreferences: SharedPreferences by lazy {
         try {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
             EncryptedSharedPreferences.create(
-                "mystery_box_secure_tokens",
-                masterKeyAlias,
                 context,
+                "mystery_box_secure_tokens",
+                masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
