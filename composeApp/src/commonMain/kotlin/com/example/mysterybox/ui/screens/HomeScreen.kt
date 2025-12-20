@@ -50,7 +50,6 @@ fun HomeScreen(
 
     val pullToRefreshState = rememberPullToRefreshState()
 
-    // Refresh data when screen resumes
     LaunchedEffect(Unit) {
         viewModel.loadBoxes()
     }

@@ -101,15 +101,21 @@ private fun AppContent() {
                             else -> 0
                         },
                         onBoxClick = {
-                            navController.navigate(Home) {
-                                popUpTo(Home) { inclusive = true }
+                            if (currentRoute?.contains("Home") != true) {
+                                navController.navigate(Home) {
+                                    popUpTo(Home) { inclusive = true }
+                                }
                             }
                         },
                         onOrdersClick = {
-                            navController.navigate(MyReservations)
+                            if (currentRoute?.contains("MyReservations") != true) {
+                                navController.navigate(MyReservations)
+                            }
                         },
                         onProfileClick = {
-                            navController.navigate(Profile)
+                            if (currentRoute?.contains("Profile") != true) {
+                                navController.navigate(Profile)
+                            }
                         }
                     )
                 }
