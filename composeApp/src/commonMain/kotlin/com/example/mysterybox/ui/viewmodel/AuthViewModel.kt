@@ -19,13 +19,7 @@ class AuthViewModel(
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
-    
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
-    
-    // Platform-specific launcher management
-    private var lineSdkLauncher: ((callback: (String?, String?, String?, String?) -> Unit) -> Unit)? = null
-    
+
     init {
         checkAuthenticationStatus()
     }
@@ -38,7 +32,6 @@ class AuthViewModel(
                     val accessToken = tokenManager.getAccessToken()
                     
                     if (user != null && !accessToken.isNullOrEmpty()) {
-                        _currentUser.value = user
                         _authState.value = AuthState.Authenticated(
                             user = user,
                             accessToken = accessToken
@@ -63,40 +56,33 @@ class AuthViewModel(
         }
     }
     
-    fun setOAuthLauncher(launcher: Any) {
-        @Suppress("UNCHECKED_CAST")
-        lineSdkLauncher = launcher as? ((callback: (String?, String?, String?, String?) -> Unit) -> Unit)
-    }
-    
+    /**
+     * Start LINE login process - sets loading state
+     */
     fun startLineLogin() {
-        val launcher = lineSdkLauncher
-        if (launcher == null) {
-            _authState.value = AuthState.Error("LINE SDK not initialized")
-            return
-        }
-        
         _authState.value = AuthState.Loading
-        
-        // Launch LINE SDK login
-        launcher { accessToken, userId, displayName, error ->
-            viewModelScope.launch {
-                if (error != null) {
-                    _authState.value = AuthState.Error("Authentication error: $error")
-                } else if (accessToken != null && userId != null && displayName != null) {
-                    // We have the access token from LINE SDK
-                    // Now send it to backend to verify and create session
-                    loginWithLineToken(accessToken, userId, displayName)
-                } else {
-                    _authState.value = AuthState.Error("Failed to get LINE authentication data")
-                }
+    }
+
+    /**
+     * Handle LINE login result from UI layer
+     */
+    fun handleLineLoginResult(accessToken: String?, error: String?) {
+        viewModelScope.launch {
+            if (error != null) {
+                _authState.value = AuthState.Error("Authentication error: $error")
+            } else if (accessToken != null) {
+                // We have the access token from LINE SDK
+                // Now send it to backend to verify and create session
+                loginWithLineToken(accessToken)
+            } else {
+                _authState.value = AuthState.Error("Failed to get LINE authentication data")
             }
         }
     }
-    
-    private suspend fun loginWithLineToken(accessToken: String, userId: String, displayName: String) {
-        when (val result = authRepository.loginWithLineToken(accessToken, userId, displayName)) {
+
+    private suspend fun loginWithLineToken(accessToken: String) {
+        when (val result = authRepository.loginWithLineToken(accessToken)) {
             is Result.Success -> {
-                _currentUser.value = result.data.user
                 _authState.value = AuthState.Authenticated(
                     user = result.data.user,
                     accessToken = result.data.accessToken
@@ -111,12 +97,7 @@ class AuthViewModel(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
-            _currentUser.value = null
             _authState.value = AuthState.Idle
         }
     }
-
-    fun isAuthenticated(): Boolean = _currentUser.value != null
-    
-    fun getCurrentUser(): User? = _currentUser.value
 }

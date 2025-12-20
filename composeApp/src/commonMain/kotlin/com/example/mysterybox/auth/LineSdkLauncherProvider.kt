@@ -7,4 +7,4 @@ import androidx.compose.runtime.Composable
  * Returns a function that starts LINE login and provides result via callback
  */
 @Composable
-expect fun rememberLineSdkLauncher(): (callback: (accessToken: String?, userId: String?, displayName: String?, error: String?) -> Unit) -> Unit
+expect fun rememberLineSdkLauncher(): (callback: (accessToken: String?, error: String?) -> Unit) -> Unit

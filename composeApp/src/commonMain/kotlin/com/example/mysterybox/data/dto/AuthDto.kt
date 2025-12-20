@@ -6,14 +6,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LineAuthRequestDto(
-    val code: String,
-    val state: String? = null,
-    @SerialName("redirect_uri")
-    val redirectUri: String
-)
-
-@Serializable
 data class LineTokenVerifyRequest(
     @SerialName("line_access_token")
     val lineAccessToken: String

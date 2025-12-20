@@ -17,7 +17,6 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
-import com.example.mysterybox.auth.rememberLineSdkLauncher
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.di.appModules
 import com.example.mysterybox.di.initializeKoin
@@ -33,7 +32,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-@Preview
 fun App() {
     // Configure Coil's singleton ImageLoader
     setSingletonImageLoaderFactory { context ->
@@ -62,12 +60,6 @@ private fun AppContent() {
         val navController = rememberNavController()
         val authViewModel: AuthViewModel = koinViewModel()
         val authState by authViewModel.authState.collectAsState()
-        
-        // Setup LINE SDK launcher
-        val lineSdkLauncher = rememberLineSdkLauncher()
-        LaunchedEffect(lineSdkLauncher) {
-            authViewModel.setOAuthLauncher(lineSdkLauncher)
-        }
 
         // Navigate on successful auth
         LaunchedEffect(authState) {
@@ -138,10 +130,6 @@ private fun AppContent() {
 
             composable<Login> {
                 LoginScreen(
-                    authState = authState,
-                    onLoginClick = {
-                        authViewModel.startLineLogin()
-                    },
                     onSkipClick = {
                         navController.navigate(Home) {
                             popUpTo(Welcome) { inclusive = true }

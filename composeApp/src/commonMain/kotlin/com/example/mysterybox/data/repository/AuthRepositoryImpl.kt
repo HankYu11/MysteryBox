@@ -14,7 +14,7 @@ class AuthRepositoryImpl(
     private val tokenManager: TokenManager
 ) : AuthRepository {
 
-    override suspend fun loginWithLineToken(accessToken: String, userId: String, displayName: String): Result<AuthSession> {
+    override suspend fun loginWithLineToken(accessToken: String): Result<AuthSession> {
         // Send LINE access token to backend for verification
         return when (val result = apiService.verifyLineAccessToken(accessToken)) {
             is Result.Success -> {
@@ -26,7 +26,7 @@ class AuthRepositoryImpl(
                     // Save backend's tokens and user data (not LINE's token)
                     tokenManager.saveUserSession(
                         response.session.accessToken,
-                        response.session.refreshToken ?: "",
+                        response.session.refreshToken,
                         session.user
                     )
                     
@@ -39,27 +39,6 @@ class AuthRepositoryImpl(
             is Result.Error -> {
                 Result.Error(ApiError.NetworkError("Failed to verify with server: ${result.error.toMessage()}"))
             }
-        }
-    }
-
-    override suspend fun loginWithLine(code: String, state: String?): Result<AuthSession> {
-        return when (val result = apiService.loginWithLine(code, state, ApiConfig.REDIRECT_URI)) {
-            is Result.Success -> {
-                val response = result.data
-                if (response.success && response.session != null) {
-                    val session = response.session.toDomain()
-                    tokenManager.saveUserSession(
-                        response.session.accessToken,
-                        response.session.refreshToken ?: "",
-                        session.user
-                    )
-                    Result.Success(session)
-                } else {
-                    val error = response.error ?: "Authentication failed"
-                    Result.Error(ApiError.AuthenticationError(error))
-                }
-            }
-            is Result.Error -> result
         }
     }
 

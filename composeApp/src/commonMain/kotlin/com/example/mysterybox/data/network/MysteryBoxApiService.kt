@@ -47,14 +47,6 @@ class MysteryBoxApiService(
 
     // === Auth APIs ===
 
-    suspend fun loginWithLine(code: String, state: String?, redirectUri: String): Result<AuthResponseDto> =
-        safeApiCall {
-            httpClient.post("${ApiConfig.BASE_URL}${ApiConfig.AUTH_LINE}") {
-                contentType(ContentType.Application.Json)
-                setBody(LineAuthRequestDto(code = code, state = state, redirectUri = redirectUri))
-            }
-        }
-
     /**
      * Verify LINE access token and create session
      * Client sends LINE access token, backend verifies with LINE API and creates session

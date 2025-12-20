@@ -1,8 +1,10 @@
 package com.example.mysterybox.auth
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
 import com.linecorp.linesdk.LineApiResponseCode
 import com.linecorp.linesdk.Scope
 import com.linecorp.linesdk.auth.LineAuthenticationParams
@@ -10,86 +12,62 @@ import com.linecorp.linesdk.auth.LineLoginApi
 import com.linecorp.linesdk.auth.LineLoginResult
 
 /**
- * Helper class for LINE SDK authentication
+ * Activity Result Contract for LINE SDK login
  */
-class LineSdkLoginHelper(
-    private val activity: Activity,
+class LineLoginContract(
     private val channelId: String
-) {
-    companion object {
-        const val REQUEST_CODE_LINE_LOGIN = 1001
+) : ActivityResultContract<Unit, LineLoginResult?>() {
+
+    override fun createIntent(context: Context, input: Unit): Intent {
+        return LineLoginApi.getLoginIntent(
+            context,
+            channelId,
+            LineAuthenticationParams.Builder()
+                .scopes(listOf(Scope.PROFILE))
+                .nonce(java.util.UUID.randomUUID().toString())
+                .build()
+        )
     }
 
-    /**
-     * Start LINE Login using LINE SDK
-     * This will use the LINE app if installed, otherwise falls back to browser
-     */
-    fun startLogin() {
-        try {
-            val loginIntent = LineLoginApi.getLoginIntent(
-                activity,
-                channelId,
-                LineAuthenticationParams.Builder()
-                    .scopes(listOf(Scope.PROFILE))
-                    // Add nonce for additional security (optional but recommended)
-                    .nonce(generateNonce())
-                    .build()
-            )
-            activity.startActivityForResult(loginIntent, REQUEST_CODE_LINE_LOGIN)
-        } catch (e: Exception) {
-            // Handle error
-            e.printStackTrace()
-        }
+    override fun parseResult(resultCode: Int, intent: Intent?): LineLoginResult? {
+        return LineLoginApi.getLoginResultFromIntent(intent)
     }
+}
 
+/**
+ * Helper object for LINE SDK authentication
+ */
+object LineSdkLoginHelper {
     /**
      * Handle the login result from LINE SDK
      */
     fun handleLoginResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?,
-        onSuccess: (accessToken: String, userId: String, displayName: String) -> Unit,
+        result: LineLoginResult?,
+        onSuccess: (accessToken: String) -> Unit,
         onFailure: (error: String) -> Unit
     ) {
-        if (requestCode != REQUEST_CODE_LINE_LOGIN) {
+        if (result == null) {
+            onFailure("Login result is null")
             return
         }
 
-        val result = LineLoginApi.getLoginResultFromIntent(data)
-
         when (result.responseCode) {
             LineApiResponseCode.SUCCESS -> {
-                // Login successful
                 val accessToken = result.lineCredential?.accessToken?.tokenString
-                val lineProfile = result.lineProfile
-                
-                if (accessToken != null && lineProfile != null) {
-                    onSuccess(
-                        accessToken,
-                        lineProfile.userId,
-                        lineProfile.displayName
-                    )
+
+                if (accessToken != null) {
+                    onSuccess(accessToken)
                 } else {
-                    onFailure("Failed to get user information")
+                    onFailure("Failed to get access token")
                 }
             }
             LineApiResponseCode.CANCEL -> {
-                // User canceled
                 onFailure("Login canceled by user")
             }
             else -> {
-                // Login failed
                 val errorMsg = result.errorData?.message ?: "Login failed"
                 onFailure(errorMsg)
             }
         }
-    }
-
-    /**
-     * Generate a random nonce for CSRF protection
-     */
-    private fun generateNonce(): String {
-        return java.util.UUID.randomUUID().toString()
     }
 }

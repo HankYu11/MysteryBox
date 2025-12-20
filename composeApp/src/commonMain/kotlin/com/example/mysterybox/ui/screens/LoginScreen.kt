@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,18 +15,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mysterybox.auth.rememberLineSdkLauncher
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.utils.navigationBarsPadding
 import com.example.mysterybox.ui.utils.statusBarsPadding
+import com.example.mysterybox.ui.viewmodel.AuthViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
-    authState: AuthState = AuthState.Idle,
-    onLoginClick: () -> Unit,
     onSkipClick: () -> Unit,
-    onMerchantLoginClick: () -> Unit = {}
+    onMerchantLoginClick: () -> Unit = {},
+    viewModel: AuthViewModel = koinViewModel()
 ) {
+    val authState = viewModel.authState.collectAsState().value
+    val lineSdkLauncher = rememberLineSdkLauncher()
+
+    fun handleLoginClick() {
+        viewModel.startLineLogin()
+        lineSdkLauncher { accessToken, error ->
+            viewModel.handleLineLoginResult(accessToken, error)
+        }
+    }
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
     Column(
@@ -144,7 +156,7 @@ fun LoginScreen(
 
         // LINE Login Button
         Button(
-            onClick = onLoginClick,
+            onClick = { handleLoginClick() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
