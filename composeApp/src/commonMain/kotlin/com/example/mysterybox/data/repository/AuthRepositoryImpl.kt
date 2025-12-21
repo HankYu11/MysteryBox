@@ -70,4 +70,38 @@ class AuthRepositoryImpl(
             Result.Error(ApiError.AuthenticationError("Not authenticated"))
         }
     }
+
+    override suspend fun getCurrentSession(): Result<AuthSession?> {
+        return try {
+            if (tokenManager.isUserAuthenticated()) {
+                val user = tokenManager.getCurrentUser()
+                val accessToken = tokenManager.getAccessToken()
+
+                if (user != null && !accessToken.isNullOrEmpty()) {
+                    Result.Success(
+                        AuthSession(
+                            accessToken = accessToken,
+                            refreshToken = tokenManager.getRefreshToken() ?: "",
+                            expiresIn = 0, // Not tracked in current implementation
+                            user = user
+                        )
+                    )
+                } else {
+                    // Invalid stored data, clear tokens
+                    tokenManager.clearUserTokens()
+                    Result.Success(null)
+                }
+            } else {
+                Result.Success(null)
+            }
+        } catch (e: Exception) {
+            // Error accessing stored data, clear and return null
+            try {
+                tokenManager.clearUserTokens()
+            } catch (clearException: Exception) {
+                // Ignore clear errors
+            }
+            Result.Success(null)
+        }
+    }
 }

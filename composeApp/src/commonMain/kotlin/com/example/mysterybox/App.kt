@@ -17,6 +17,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
+import com.example.mysterybox.data.auth.AuthManager
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.di.appModules
 import com.example.mysterybox.di.initializeKoin
@@ -25,7 +26,6 @@ import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
 import com.example.mysterybox.ui.theme.MysteryBoxTheme
 import com.example.mysterybox.ui.utils.safeDrawingPadding
-import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -56,19 +56,15 @@ fun App() {
 
 @Composable
 private fun AppContent() {
+    val authManager: AuthManager = koinInject()
+
+    // Initialize auth state on app startup
+    LaunchedEffect(Unit) {
+        authManager.initialize()
+    }
+
     MysteryBoxTheme {
         val navController = rememberNavController()
-        val authViewModel: AuthViewModel = koinViewModel()
-        val authState by authViewModel.authState.collectAsState()
-
-        // Navigate on successful auth
-        LaunchedEffect(authState) {
-            if (authState is AuthState.Authenticated) {
-                navController.navigate(Home) {
-                    popUpTo(Welcome) { inclusive = true }
-                }
-            }
-        }
 
         // Track current destination for bottom navigation
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -122,6 +118,11 @@ private fun AppContent() {
             ) {
             composable<Welcome> {
                 WelcomeScreen(
+                    onNavigateToHome = {
+                        navController.navigate(Home) {
+                            popUpTo(Welcome) { inclusive = true }
+                        }
+                    },
                     onStartClick = {
                         navController.navigate(Login)
                     }
@@ -137,6 +138,12 @@ private fun AppContent() {
                     },
                     onMerchantLoginClick = {
                         navController.navigate(MerchantLogin)
+                    },
+                    onLoginSuccess = {
+                        navController.navigate(Home) {
+                            popUpTo(Welcome) { inclusive = true }
+                        }
+
                     }
                 )
             }

@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,21 +18,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mysterybox.auth.rememberLineSdkLauncher
-import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.utils.navigationBarsPadding
 import com.example.mysterybox.ui.utils.statusBarsPadding
-import com.example.mysterybox.ui.viewmodel.AuthViewModel
+import com.example.mysterybox.ui.viewmodel.LoginUiState
+import com.example.mysterybox.ui.viewmodel.LoginViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
+    onLoginSuccess: () -> Unit,
     onSkipClick: () -> Unit,
     onMerchantLoginClick: () -> Unit = {},
-    viewModel: AuthViewModel = koinViewModel()
+    viewModel: LoginViewModel = koinViewModel()
 ) {
-    val authState = viewModel.authState.collectAsState().value
+    val loginState by viewModel.loginState.collectAsState()
     val lineSdkLauncher = rememberLineSdkLauncher()
+
+    // Navigate on successful login
+    LaunchedEffect(loginState) {
+        if (loginState is LoginUiState.Success) {
+            onLoginSuccess()
+        }
+    }
 
     fun handleLoginClick() {
         viewModel.startLineLogin()
@@ -38,8 +48,7 @@ fun LoginScreen(
             viewModel.handleLineLoginResult(accessToken, error)
         }
     }
-    val isLoading = authState is AuthState.Loading
-    val errorMessage = (authState as? AuthState.Error)?.message
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -133,23 +142,26 @@ fun LoginScreen(
         )
 
         // Error Message
-        if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                ),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(12.dp),
-                    textAlign = TextAlign.Center
-                )
+        when (loginState) {
+            is LoginUiState.Error -> {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = (loginState as LoginUiState.Error).message,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
+            else -> { /* No error to display */ }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -165,45 +177,48 @@ fun LoginScreen(
                 disabledContainerColor = Green500.copy(alpha = 0.6f)
             ),
             shape = RoundedCornerShape(12.dp),
-            enabled = !isLoading
+            enabled = loginState !is LoginUiState.Loading
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = White,
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "登入中...",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // LINE icon placeholder
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "L",
-                            color = Green500,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+            when (loginState) {
+                is LoginUiState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = White,
+                        strokeWidth = 2.dp
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "透過 LINE 帳號登入",
+                        text = "登入中...",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
+                }
+                else -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // LINE icon placeholder
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "L",
+                                color = Green500,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "透過 LINE 帳號登入",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }

@@ -2,7 +2,7 @@ package com.example.mysterybox.data.network
 
 object ApiConfig {
     // Backend API URL - Use 10.0.2.2 for Android emulator to reach host localhost
-    const val BASE_URL = "http://192.168.0.59:8080"
+    const val BASE_URL = "http://192.168.1.114:8080"
 
     // LINE SDK Configuration
     const val LINE_CHANNEL_ID = "2008724728" // Replace with your actual LINE Channel ID

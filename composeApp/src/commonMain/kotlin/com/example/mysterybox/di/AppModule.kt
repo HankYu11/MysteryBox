@@ -1,5 +1,6 @@
 package com.example.mysterybox.di
 
+import com.example.mysterybox.data.auth.AuthManager
 import com.example.mysterybox.data.network.MysteryBoxApiService
 import com.example.mysterybox.data.network.TokenManager
 import com.example.mysterybox.data.network.createHttpClient
@@ -11,10 +12,12 @@ import com.example.mysterybox.data.repository.MerchantRepository
 import com.example.mysterybox.data.repository.MerchantRepositoryImpl
 import com.example.mysterybox.data.repository.ReservationRepository
 import com.example.mysterybox.data.repository.ReservationRepositoryImpl
-import com.example.mysterybox.ui.viewmodel.AuthViewModel
 import com.example.mysterybox.ui.viewmodel.BoxViewModel
+import com.example.mysterybox.ui.viewmodel.LoginViewModel
 import com.example.mysterybox.ui.viewmodel.MerchantViewModel
+import com.example.mysterybox.ui.viewmodel.ProfileViewModel
 import com.example.mysterybox.ui.viewmodel.ReservationViewModel
+import com.example.mysterybox.ui.viewmodel.WelcomeViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -24,6 +27,7 @@ import org.koin.dsl.module
 val networkModule = module {
     single { createHttpClient() }
     single { TokenManager(get()) }
+    single { AuthManager(get()) }
     single { MysteryBoxApiService(get(), get()) }
 }
 
@@ -35,7 +39,9 @@ val repositoryModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { AuthViewModel(get(), get()) }
+    viewModel { LoginViewModel(get(), get()) }
+    viewModel { WelcomeViewModel(get()) }
+    viewModel { ProfileViewModel(get()) }
     viewModel { BoxViewModel(get(), get()) }
     viewModel { MerchantViewModel(get(), get()) }
     viewModelOf(::ReservationViewModel)

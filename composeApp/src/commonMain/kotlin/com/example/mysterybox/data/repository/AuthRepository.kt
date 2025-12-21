@@ -9,4 +9,5 @@ interface AuthRepository {
     suspend fun logout(): Result<Unit>
     suspend fun refreshToken(): Result<AuthSession>
     suspend fun getCurrentUser(): Result<User>
+    suspend fun getCurrentSession(): Result<AuthSession?>
 }

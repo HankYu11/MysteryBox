@@ -27,16 +27,18 @@ import coil3.compose.AsyncImage
 import com.example.mysterybox.ui.state.AuthState
 import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.utils.safeDrawingPadding
-import com.example.mysterybox.ui.viewmodel.AuthViewModel
+import com.example.mysterybox.ui.viewmodel.ProfileUiState
+import com.example.mysterybox.ui.viewmodel.ProfileViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onNavigateToLogin: () -> Unit,
-    authViewModel: AuthViewModel = koinViewModel()
+    viewModel: ProfileViewModel = koinViewModel()
 ) {
-    val authState by authViewModel.authState.collectAsState()
+    val authState by viewModel.authState.collectAsState()
+    val profileState by viewModel.profileState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -129,20 +131,28 @@ fun ProfileScreen(
                             // Logout Button
                             OutlinedButton(
                                 onClick = {
-                                    authViewModel.logout()
+                                    viewModel.logout()
                                     onNavigateToLogin()
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = MaterialTheme.colorScheme.error
                                 ),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                enabled = profileState !is ProfileUiState.LoggingOut
                             ) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Logout,
-                                    contentDescription = "登出",
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                if (profileState is ProfileUiState.LoggingOut) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Logout,
+                                        contentDescription = "登出",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("登出")
                             }
