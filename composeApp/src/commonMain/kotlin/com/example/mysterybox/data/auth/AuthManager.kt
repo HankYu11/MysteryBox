@@ -53,10 +53,14 @@ class AuthManager(
     /**
      * Clear authentication state and logout from backend.
      * Called by ViewModels when user logs out.
+     * Returns Result indicating success or failure.
      */
-    suspend fun logout() {
-        authRepository.logout()
-        _authState.value = AuthState.Idle
+    suspend fun logout(): Result<Unit> {
+        val result = authRepository.logout()
+        if (result is Result.Success) {
+            _authState.value = AuthState.Idle
+        }
+        return result
     }
 
     /**

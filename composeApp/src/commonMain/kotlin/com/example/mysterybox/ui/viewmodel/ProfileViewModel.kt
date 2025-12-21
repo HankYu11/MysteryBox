@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 sealed class ProfileUiState {
     data object Idle : ProfileUiState()
     data object LoggingOut : ProfileUiState()
+    data object LogoutSuccess : ProfileUiState()
+    data class LogoutError(val message: String) : ProfileUiState()
 }
 
 /**
@@ -38,13 +40,27 @@ class ProfileViewModel(
 
     /**
      * Logout the current user.
-     * Sets loading state, calls AuthManager to logout, then resets state.
+     * Sets loading state, calls AuthManager to logout, then emits result.
      */
     fun logout() {
         viewModelScope.launch {
             _profileState.value = ProfileUiState.LoggingOut
-            authManager.logout()
-            _profileState.value = ProfileUiState.Idle
+            when (val result = authManager.logout()) {
+                is com.example.mysterybox.data.model.Result.Success -> {
+                    _profileState.value = ProfileUiState.LogoutSuccess
+                }
+                is com.example.mysterybox.data.model.Result.Error -> {
+                    _profileState.value = ProfileUiState.LogoutError(result.error.toMessage())
+                }
+            }
         }
+    }
+
+    /**
+     * Reset profile state to idle.
+     * Call this after handling logout success/error.
+     */
+    fun resetState() {
+        _profileState.value = ProfileUiState.Idle
     }
 }

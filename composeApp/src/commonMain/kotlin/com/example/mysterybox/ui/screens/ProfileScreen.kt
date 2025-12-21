@@ -15,9 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,12 +40,11 @@ fun ProfileScreen(
 ) {
     val authState by viewModel.authState.collectAsState()
     val profileState by viewModel.profileState.collectAsState()
-    var logoutRequested by remember { mutableStateOf(false) }
 
     // Navigate to login after successful logout
-    LaunchedEffect(authState) {
-        if (logoutRequested && authState is AuthState.Idle) {
-            logoutRequested = false
+    LaunchedEffect(profileState) {
+        if (profileState is ProfileUiState.LogoutSuccess) {
+            viewModel.resetState()
             onNavigateToLogin()
         }
     }
@@ -144,7 +140,6 @@ fun ProfileScreen(
                             // Logout Button
                             OutlinedButton(
                                 onClick = {
-                                    logoutRequested = true
                                     viewModel.logout()
                                 },
                                 modifier = Modifier.fillMaxWidth(),
