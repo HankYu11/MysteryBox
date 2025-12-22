@@ -81,11 +81,11 @@ private fun BoxDetailContent(
     onReserveClick: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        contentWindowInsets = WindowInsets(0.dp),
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Top App Bar
             TopAppBar(
                 title = { Text("Mystery Box Details") },
                 navigationIcon = {
@@ -100,63 +100,14 @@ private fun BoxDetailContent(
                     containerColor = White
                 )
             )
-        },
-        bottomBar = {
-            Surface(
-                shadowElevation = 8.dp,
-                color = White
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "$",
-                            color = Green500,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "${box.discountedPrice}",
-                            color = Green500,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
 
-                    Button(
-                        onClick = onReserveClick,
-                        enabled = box.status != BoxStatus.SOLD_OUT,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Green500,
-                            disabledContainerColor = Gray300
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(
-                            text = "Reserve Now",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "->", fontSize = 16.sp)
-                    }
-                }
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(White)
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-        ) {
+            // Scrollable Content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(White)
+                    .verticalScroll(rememberScrollState())
+            ) {
             // Image
             Box(
                 modifier = Modifier
@@ -420,7 +371,63 @@ private fun BoxDetailContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
+            // Closes scrollable content Column
+            }
+
+            // Bottom Bar
+            Surface(
+                shadowElevation = 8.dp,
+                color = White
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "$",
+                            color = Green500,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${box.discountedPrice}",
+                            color = Green500,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Button(
+                        onClick = onReserveClick,
+                        enabled = box.status != BoxStatus.SOLD_OUT,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Green500,
+                            disabledContainerColor = Gray300
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Text(
+                            text = "Reserve Now",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "->", fontSize = 16.sp)
+                    }
+                }
+            }
         }
+
+        // Snackbar Host
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
