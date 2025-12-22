@@ -37,11 +37,11 @@ fun BoxDetailScreen(
     boxId: String,
     onBackClick: () -> Unit,
     onNavigateToReservations: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     viewModel: BoxViewModel = koinViewModel()
 ) {
     val selectedBox by viewModel.selectedBox.collectAsState()
     val reservationState by viewModel.reservationState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(boxId) {
         viewModel.loadBoxDetail(boxId)
@@ -68,8 +68,7 @@ fun BoxDetailScreen(
     BoxDetailContent(
         box = box,
         onBackClick = onBackClick,
-        onReserveClick = { viewModel.createReservation(box) },
-        snackbarHostState = snackbarHostState
+        onReserveClick = { viewModel.createReservation(box) }
     )
 }
 
@@ -78,8 +77,7 @@ fun BoxDetailScreen(
 private fun BoxDetailContent(
     box: MysteryBox,
     onBackClick: () -> Unit,
-    onReserveClick: () -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+    onReserveClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -422,12 +420,6 @@ private fun BoxDetailContent(
                 }
             }
         }
-
-        // Snackbar Host
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 

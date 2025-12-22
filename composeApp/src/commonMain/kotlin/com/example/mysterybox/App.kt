@@ -3,10 +3,13 @@ package com.example.mysterybox
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
@@ -65,20 +68,22 @@ private fun AppContent() {
 
     MysteryBoxTheme {
         val navController = rememberNavController()
+        val snackbarHostState = remember { SnackbarHostState() }
 
         // Track current destination for bottom navigation
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-        
+
         // Determine if current screen should show bottom navigation
         val showBottomBar = when {
             currentRoute?.contains("Home") == true -> true
-            currentRoute?.contains("MyReservations") == true -> true  
+            currentRoute?.contains("MyReservations") == true -> true
             currentRoute?.contains("Profile") == true -> true
             else -> false
         }
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (showBottomBar) {
                     BottomNavigationBar(
@@ -165,7 +170,8 @@ private fun AppContent() {
                     },
                     onNavigateToReservations = {
                         navController.navigate(MyReservations)
-                    }
+                    },
+                    snackbarHostState = snackbarHostState
                 )
             }
 
