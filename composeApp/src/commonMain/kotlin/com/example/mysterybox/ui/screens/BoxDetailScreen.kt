@@ -65,6 +65,7 @@ fun BoxDetailScreen(
     val box = selectedBox ?: return
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
