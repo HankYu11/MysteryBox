@@ -12,8 +12,13 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mysterybox</string>
+				<string>line3rdp.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			</array>
 		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>lineauth2</string>
 	</array>
 </dict>
 </plist>

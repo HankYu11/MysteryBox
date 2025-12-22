@@ -4,7 +4,15 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        let viewController = MainViewControllerKt.MainViewController()
+
+        // Store reference in IOSLineSdkManager for LINE SDK presentation
+        // Use main queue to ensure thread safety
+        DispatchQueue.main.async {
+            IOSLineSdkManager.shared.setRootViewController(viewController: viewController)
+        }
+
+        return viewController
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

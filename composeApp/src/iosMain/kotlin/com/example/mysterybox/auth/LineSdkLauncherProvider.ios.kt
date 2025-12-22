@@ -4,13 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
 /**
- * iOS implementation (stub for now)
+ * iOS implementation using LINE SDK via Swift bridge.
+ * Delegates to IOSLineSdkManager which bridges to Swift LINE SDK.
  */
 @Composable
 actual fun rememberLineSdkLauncher(): (callback: (accessToken: String?, error: String?) -> Unit) -> Unit {
     return remember {
         { callback ->
-            callback(null, "LINE SDK not implemented for iOS yet")
+            IOSLineSdkManager.startLogin(callback)
         }
     }
 }

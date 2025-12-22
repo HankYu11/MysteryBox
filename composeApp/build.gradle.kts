@@ -15,14 +15,41 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
+    // iOS targets with dynamic framework (required for Compose Multiplatform)
     listOf(
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
+        iosTarget.compilations.all {
+            compilerOptions.configure {
+                // Disable optimizations that create $artificial symbols
+                freeCompilerArgs.add("-Xno-param-assertions")
+                freeCompilerArgs.add("-Xno-call-assertions")
+                freeCompilerArgs.add("-Xno-receiver-assertions")
+            }
+        }
+
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
-            isStatic = true
+            isStatic = false  // Dynamic framework resolves symbols at runtime
+
+            // Enable transitive export to include all dependencies
+            transitiveExport = true
+
+            // Export base ViewModel library (not compose variant to avoid $artificial symbols)
+            export(libs.androidx.lifecycle.viewmodel)
+            // Export Compose and other dependencies
+            export(compose.runtime)
+            export(compose.foundation)
+            export(compose.material3)
+            export(compose.ui)
+            export(libs.androidx.lifecycle.viewmodelCompose)
+            export(libs.androidx.lifecycle.runtimeCompose)
+            export(libs.androidx.navigation.compose)
+            export(libs.koin.core)
+            export(libs.koin.compose)
+            export(libs.koin.compose.viewmodel)
         }
     }
     
@@ -36,25 +63,29 @@ kotlin {
             implementation(libs.koin.android)
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
+            // Use api() for core Compose dependencies needed by iOS framework
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material3)
             implementation(compose.materialIconsExtended)
-            implementation(compose.ui)
+            api(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.androidx.navigation.compose)
+            // Base lifecycle ViewModel (KMP-compatible, no $artificial symbols)
+            api(libs.androidx.lifecycle.viewmodel)
+            // Compose-specific lifecycle dependencies
+            api(libs.androidx.lifecycle.viewmodelCompose)
+            api(libs.androidx.lifecycle.runtimeCompose)
+            api(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
-            // Koin DI
-            implementation(libs.koin.core)
-            implementation(libs.koin.compose)
-            implementation(libs.koin.compose.viewmodel)
+            // Koin DI - use api() for exported dependencies
+            api(libs.koin.core)
+            api(libs.koin.compose)
+            api(libs.koin.compose.viewmodel)
             // Coil for image loading
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
