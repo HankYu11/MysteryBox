@@ -28,6 +28,7 @@ import com.example.mysterybox.ui.theme.*
 import com.example.mysterybox.ui.utils.safeDrawingPadding
 import com.example.mysterybox.ui.viewmodel.BoxViewModel
 import com.example.mysterybox.ui.viewmodel.ReservationState
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +65,22 @@ fun BoxDetailScreen(
 
     val box = selectedBox ?: return
 
+    BoxDetailContent(
+        box = box,
+        onBackClick = onBackClick,
+        onReserveClick = { viewModel.createReservation(box) },
+        snackbarHostState = snackbarHostState
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BoxDetailContent(
+    box: MysteryBox,
+    onBackClick: () -> Unit,
+    onReserveClick: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -111,7 +128,7 @@ fun BoxDetailScreen(
                     }
 
                     Button(
-                        onClick = { viewModel.createReservation(box) },
+                        onClick = onReserveClick,
                         enabled = box.status != BoxStatus.SOLD_OUT,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Green500,
@@ -403,5 +420,33 @@ fun BoxDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun BoxDetailScreenPreview() {
+    val mockBox = MysteryBox(
+        id = "1",
+        name = "Fresh Bakery Surprise Box",
+        description = "A delightful mix of freshly baked goods including artisan bread, pastries, and sweet treats. Perfect for breakfast or snacks throughout the week.",
+        originalPrice = 2500,
+        discountedPrice = 850,
+        imageUrl = "bakery",
+        storeName = "Artisan Bakery & Cafe",
+        storeAddress = "123 Main Street, Downtown",
+        pickupTimeStart = "19:00",
+        pickupTimeEnd = "21:00",
+        status = BoxStatus.AVAILABLE,
+        remainingCount = 3,
+        discountPercent = 66
+    )
+
+    MysteryBoxTheme {
+        BoxDetailContent(
+            box = mockBox,
+            onBackClick = {},
+            onReserveClick = {}
+        )
     }
 }
