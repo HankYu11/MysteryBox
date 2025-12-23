@@ -37,7 +37,7 @@ fun BoxDetailScreen(
     boxId: String,
     onBackClick: () -> Unit,
     onNavigateToReservations: () -> Unit,
-    snackbarHostState: SnackbarHostState,
+    onShowSnackbar: (String) -> Unit,
     viewModel: BoxViewModel = koinViewModel()
 ) {
     val selectedBox by viewModel.selectedBox.collectAsState()
@@ -53,12 +53,12 @@ fun BoxDetailScreen(
                 viewModel.resetReservationState()
                 onNavigateToReservations()
             }
+
             is ReservationState.Error -> {
-                snackbarHostState.showSnackbar(
-                    message = (reservationState as ReservationState.Error).message
-                )
+                onShowSnackbar((reservationState as ReservationState.Error).message)
                 viewModel.resetReservationState()
             }
+
             else -> {}
         }
     }
@@ -77,35 +77,33 @@ fun BoxDetailScreen(
 private fun BoxDetailContent(
     box: MysteryBox,
     onBackClick: () -> Unit,
-    onReserveClick: () -> Unit
+    onReserveClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .background(White),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Top App Bar
-            TopAppBar(
-                title = { Text("Mystery Box Details") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = White
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
                 )
-            )
+            }
+            Text("Mystery Box Details")
+        }
 
-            // Scrollable Content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(White)
-                    .verticalScroll(rememberScrollState())
-            ) {
+        // Scrollable Content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .background(White)
+                .verticalScroll(rememberScrollState())
+        ) {
             // Image
             Box(
                 modifier = Modifier
@@ -114,7 +112,11 @@ private fun BoxDetailContent(
                     .background(
                         Brush.horizontalGradient(
                             colors = when (box.imageUrl) {
-                                "bakery", "bakery_night" -> listOf(Color(0xFFD4A574), Color(0xFFE8C9A0))
+                                "bakery", "bakery_night" -> listOf(
+                                    Color(0xFFD4A574),
+                                    Color(0xFFE8C9A0)
+                                )
+
                                 "snacks" -> listOf(Color(0xFF8B9DC3), Color(0xFFB8C5D6))
                                 "vegetables" -> listOf(Color(0xFF7CB342), Color(0xFF9CCC65))
                                 "drinks" -> listOf(Color(0xFFAB47BC), Color(0xFFCE93D8))
@@ -370,53 +372,52 @@ private fun BoxDetailContent(
                 Spacer(modifier = Modifier.height(24.dp))
             }
             // Closes scrollable content Column
-            }
+        }
 
-            // Bottom Bar
-            Surface(
-                shadowElevation = 8.dp,
-                color = White
+        // Bottom Bar
+        Surface(
+            shadowElevation = 8.dp,
+            color = White
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "$",
-                            color = Green500,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "${box.discountedPrice}",
-                            color = Green500,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "$",
+                        color = Green500,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "${box.discountedPrice}",
+                        color = Green500,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-                    Button(
-                        onClick = onReserveClick,
-                        enabled = box.status != BoxStatus.SOLD_OUT,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Green500,
-                            disabledContainerColor = Gray300
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(
-                            text = "Reserve Now",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "->", fontSize = 16.sp)
-                    }
+                Button(
+                    onClick = onReserveClick,
+                    enabled = box.status != BoxStatus.SOLD_OUT,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Green500,
+                        disabledContainerColor = Gray300
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(
+                        text = "Reserve Now",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "->", fontSize = 16.sp)
                 }
             }
         }

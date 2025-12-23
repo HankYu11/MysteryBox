@@ -3,6 +3,7 @@ package com.example.mysterybox
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
@@ -29,6 +31,7 @@ import com.example.mysterybox.ui.navigation.*
 import com.example.mysterybox.ui.screens.*
 import com.example.mysterybox.ui.theme.MysteryBoxTheme
 import com.example.mysterybox.ui.utils.safeDrawingPadding
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -68,6 +71,7 @@ private fun AppContent() {
 
     MysteryBoxTheme {
         val navController = rememberNavController()
+        val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
         // Track current destination for bottom navigation
@@ -171,7 +175,11 @@ private fun AppContent() {
                     onNavigateToReservations = {
                         navController.navigate(MyReservations)
                     },
-                    snackbarHostState = snackbarHostState
+                    onShowSnackbar = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message = it, duration = SnackbarDuration.Short)
+                        }
+                    },
                 )
             }
 
