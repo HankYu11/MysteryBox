@@ -9,12 +9,13 @@ import com.example.mysterybox.data.model.MerchantLoginRequest
 import com.example.mysterybox.data.model.MerchantOrder
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
-import com.example.mysterybox.data.network.TokenManager
+import com.example.mysterybox.data.storage.TokenStorage
 import com.example.mysterybox.data.repository.MerchantRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 sealed class MerchantUiState {
     data object Idle : MerchantUiState()
@@ -72,7 +73,8 @@ data class LoginFormState(
 
 class MerchantViewModel(
     private val merchantRepository: MerchantRepository,
-    private val tokenManager: TokenManager
+    private val tokenStorage: TokenStorage,
+    private val json: Json
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MerchantUiState>(MerchantUiState.Idle)
@@ -114,17 +116,18 @@ class MerchantViewModel(
     private fun checkMerchantAuth() {
         viewModelScope.launch {
             try {
-                if (tokenManager.isMerchantAuthenticated()) {
-                    val merchant = tokenManager.getCurrentMerchant()
-                    val token = tokenManager.getMerchantToken()
-                    
-                    if (merchant != null && !token.isNullOrEmpty()) {
+                val token = tokenStorage.getMerchantToken()
+                val merchantDataJson = tokenStorage.getMerchantData()
+
+                if (token != null && merchantDataJson != null) {
+                    try {
+                        val merchant = json.decodeFromString<Merchant>(merchantDataJson)
                         _currentMerchant.value = merchant
                         _uiState.value = MerchantUiState.LoggedIn(merchant)
                         loadMerchantBoxes()
-                    } else {
-                        // Invalid stored data, clear tokens
-                        tokenManager.clearMerchantToken()
+                    } catch (e: Exception) {
+                        // Invalid merchant data, clear tokens
+                        tokenStorage.clearMerchantToken()
                         _uiState.value = MerchantUiState.Idle
                     }
                 } else {
@@ -133,7 +136,7 @@ class MerchantViewModel(
             } catch (e: Exception) {
                 // Error accessing stored data, clear and start fresh
                 try {
-                    tokenManager.clearMerchantToken()
+                    tokenStorage.clearMerchantToken()
                 } catch (clearException: Exception) {
                     // Ignore clear errors
                 }
