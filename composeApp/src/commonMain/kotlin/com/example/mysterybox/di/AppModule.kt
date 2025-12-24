@@ -15,7 +15,7 @@ val networkModule = module {
 
 val repositoryModule = module {
     single<BoxRepository> { BoxRepositoryImpl(get()) }
-    single<MerchantRepository> { MerchantRepositoryImpl(get(), get()) }
+    single<MerchantRepository> { MerchantRepositoryImpl(get(), get(), get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
 }
 

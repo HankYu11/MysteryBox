@@ -18,11 +18,14 @@ import com.example.mysterybox.data.model.MerchantOrderSummary
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.network.MysteryBoxApiService
-import com.example.mysterybox.data.network.TokenManager
+import com.example.mysterybox.data.storage.TokenStorage
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class MerchantRepositoryImpl(
     private val apiService: MysteryBoxApiService,
-    private val tokenManager: TokenManager
+    private val tokenStorage: TokenStorage,
+    private val json: Json
 ) : MerchantRepository {
 
     override suspend fun login(request: MerchantLoginRequest): Result<Merchant> {
@@ -31,7 +34,8 @@ class MerchantRepositoryImpl(
                 val merchantResponse = result.data
                 val merchant = merchantResponse.toDomain()
                 merchantResponse.token?.let { token ->
-                    tokenManager.saveMerchantSession(token, merchant)
+                    tokenStorage.saveMerchantToken(token)
+                    tokenStorage.saveMerchantData(json.encodeToString(merchant))
                 }
                 Result.Success(merchant)
             }
@@ -42,10 +46,10 @@ class MerchantRepositoryImpl(
     override suspend fun logout(): Result<Unit> {
         return try {
             // Call logout API if needed
-            tokenManager.clearMerchantToken()
+            tokenStorage.clearMerchantToken()
             Result.Success(Unit)
         } catch (e: Exception) {
-            tokenManager.clearMerchantToken() // Clear token even if API call fails
+            tokenStorage.clearMerchantToken() // Clear token even if API call fails
             Result.Success(Unit)
         }
     }
@@ -53,7 +57,8 @@ class MerchantRepositoryImpl(
     override suspend fun getCurrentMerchant(): Result<Merchant> {
         // This would typically fetch from server or decode JWT token
         // For now, return error if no token exists
-        return if (tokenManager.isMerchantAuthenticated()) {
+        val token = tokenStorage.getMerchantToken()
+        return if (token != null) {
             // In a real implementation, you'd decode the JWT or call an API
             Result.Error(ApiError.NotImplemented("getCurrentMerchant not implemented - needs JWT decode or API call"))
         } else {
@@ -62,7 +67,7 @@ class MerchantRepositoryImpl(
     }
 
     override suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox> {
-        if (!tokenManager.isMerchantAuthenticated()) {
+        if (tokenStorage.getMerchantToken() == null) {
             return Result.Error(ApiError.AuthenticationError("請先登入"))
         }
 
