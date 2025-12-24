@@ -63,10 +63,7 @@ class ReservationViewModel(
                     updateFilteredReservations()
                 }
                 is Result.Error -> {
-                    // Check if session was cleared due to auth failure
-                    if (result.error is ApiError.AuthenticationError) {
-                        authManager.checkAndUpdateAuthState()
-                    }
+                    // Auth state updates automatically via TokenStorage flows
                     _reservations.value = emptyList()
                     _filteredReservations.value = emptyList()
                 }
@@ -96,10 +93,7 @@ class ReservationViewModel(
                         loadReservations() // Refresh the list to show updated status
                     }
                     is Result.Error -> {
-                        // Check if session was cleared due to auth failure
-                        if (result.error is ApiError.AuthenticationError) {
-                            authManager.checkAndUpdateAuthState()
-                        }
+                        // Auth state updates automatically via TokenStorage flows
                         _cancelReservationState.value = CancelReservationState.Error(
                             result.error.toMessage()
                         )

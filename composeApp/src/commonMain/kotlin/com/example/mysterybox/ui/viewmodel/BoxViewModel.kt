@@ -92,10 +92,7 @@ class BoxViewModel(
             when (val result = reservationRepository.createReservation(box)) {
                 is Result.Success -> _reservationState.value = ReservationState.Success
                 is Result.Error -> {
-                    // Check if session was cleared due to auth failure
-                    if (result.error is ApiError.AuthenticationError) {
-                        authManager.checkAndUpdateAuthState()
-                    }
+                    // Auth state updates automatically via TokenStorage flows
                     _reservationState.value = ReservationState.Error(result.error.toMessage())
                 }
             }
