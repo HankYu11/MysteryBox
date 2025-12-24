@@ -6,8 +6,23 @@ import com.example.mysterybox.data.model.Merchant
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Reservation
 import com.example.mysterybox.data.model.ReservationStatus
+import com.example.mysterybox.data.model.User
 
 object TestFixtures {
+
+    fun createUser(
+        id: String = "user-1",
+        lineUserId: String? = "U1234567890",
+        displayName: String = "Test User",
+        pictureUrl: String? = "https://example.com/picture.jpg",
+        createdAt: String? = "2024-01-01T00:00:00Z"
+    ) = User(
+        id = id,
+        lineUserId = lineUserId,
+        displayName = displayName,
+        pictureUrl = pictureUrl,
+        createdAt = createdAt
+    )
 
     fun createMerchant(
         id: String = "merchant-1",

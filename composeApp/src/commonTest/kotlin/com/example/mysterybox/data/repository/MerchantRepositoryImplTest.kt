@@ -85,7 +85,7 @@ class MerchantRepositoryImplTest {
     fun `logout clears merchant token`() = runTest {
         val mockStorage = MockTokenStorage()
         val tokenManager = TokenManager(mockStorage)
-        tokenManager.saveMerchantToken("existing-token")
+        tokenManager.saveMerchantSession("existing-token", TestFixtures.createMerchant())
         val fakeApi = FakeMerchantApiService()
         val repository = TestableMerchantRepository(fakeApi, tokenManager)
 
@@ -108,7 +108,7 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `getCurrentMerchant returns merchant after login`() = runTest {
-        val tokenManager = TokenManager()
+        val tokenManager = TokenManager(MockTokenStorage())
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -125,33 +125,15 @@ class MerchantRepositoryImplTest {
 
         repository.login("test@store.com", "password")
 
-        val merchant = repository.getCurrentMerchant()
-        assertEquals("Logged In Store", merchant?.storeName)
-    }
-
-    @Test
-    fun `isLoggedIn returns false when not authenticated`() {
-        val tokenManager = TokenManager()
-        val fakeApi = FakeMerchantApiService()
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
-
-        assertFalse(repository.isLoggedIn())
-    }
-
-    @Test
-    fun `isLoggedIn returns true when authenticated`() {
-        val tokenManager = TokenManager()
-        tokenManager.saveMerchantToken("token")
-        val fakeApi = FakeMerchantApiService()
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
-
-        assertTrue(repository.isLoggedIn())
+        val result = repository.getCurrentMerchant()
+        assertTrue(result is Result.Success)
+        assertEquals("Logged In Store", result.data.storeName)
     }
 
     @Test
     fun `getMerchantBoxes returns boxes on success`() = runTest {
-        val tokenManager = TokenManager()
-        tokenManager.saveMerchantToken("token")
+        val tokenManager = TokenManager(MockTokenStorage())
+        tokenManager.saveMerchantSession("token", TestFixtures.createMerchant())
         val fakeApi = FakeMerchantApiService(
             getMerchantBoxesResponse = Result.Success(
                 listOf(
@@ -170,8 +152,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `getMerchantBoxes returns error on failure`() = runTest {
-        val tokenManager = TokenManager()
-        tokenManager.saveMerchantToken("token")
+        val tokenManager = TokenManager(MockTokenStorage())
+        tokenManager.saveMerchantSession("token", TestFixtures.createMerchant())
         val fakeApi = FakeMerchantApiService(
             getMerchantBoxesResponse = Result.Error(ApiError.NetworkError("Connection failed"))
         )
@@ -241,7 +223,11 @@ private class TestableMerchantRepository(
             is Result.Success -> {
                 val merchant = result.data.toDomain()
                 currentMerchant = merchant
-                result.data.token?.let { tokenManager.saveMerchantToken(it) }
+                result.data.token?.let {
+                    currentMerchant?.let { merchant ->
+                        tokenManager.saveMerchantSession(it, merchant)
+                    }
+                }
                 Result.Success(merchant)
             }
             is Result.Error -> result
@@ -252,14 +238,14 @@ private class TestableMerchantRepository(
         return login(request.email, request.password)
     }
 
-    override fun logout() {
+    override suspend fun logout(): Result<Unit> {
         currentMerchant = null
         tokenManager.clearMerchantToken()
+        return Result.Success(Unit)
     }
 
-    override fun getCurrentMerchant(): com.example.mysterybox.data.model.Merchant? = currentMerchant
-
-    override fun isLoggedIn(): Boolean = tokenManager.isMerchantAuthenticated()
+    override suspend fun getCurrentMerchant(): Result<com.example.mysterybox.data.model.Merchant> =
+        currentMerchant?.let { Result.Success(it) } ?: Result.Error(ApiError.AuthenticationError("Not logged in"))
 
     override suspend fun createBox(request: com.example.mysterybox.data.model.CreateBoxRequest): Result<com.example.mysterybox.data.model.MysteryBox> {
         return Result.Error(ApiError.UnknownError)
