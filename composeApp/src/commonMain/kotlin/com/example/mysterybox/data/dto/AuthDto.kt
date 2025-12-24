@@ -62,6 +62,13 @@ data class ErrorResponseDto(
     val error: String
 )
 
+@Serializable
+data class CurrentUserResponseDto(
+    val success: Boolean,
+    val user: UserResponseDto? = null,
+    val error: String? = null
+)
+
 fun UserResponseDto.toDomain(): User = User(
     id = id,
     lineUserId = lineUserId,
