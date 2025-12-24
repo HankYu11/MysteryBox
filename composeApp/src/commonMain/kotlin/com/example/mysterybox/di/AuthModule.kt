@@ -12,7 +12,7 @@ import org.koin.dsl.module
 
 val authModule = module {
     single<TokenStorage> { DatastoreTokenStorage(createDataStore()) }
-    single { AuthManager(get()) }
+    single { AuthManager(get(), get(), get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
     viewModel { LoginViewModel(get()) }
 }
