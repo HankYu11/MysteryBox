@@ -2,6 +2,8 @@ package com.example.mysterybox.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mysterybox.data.auth.AuthManager
+import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Reservation
@@ -25,7 +27,8 @@ sealed class ReservationState {
 
 class BoxViewModel(
     private val boxRepository: BoxRepository,
-    private val reservationRepository: ReservationRepository
+    private val reservationRepository: ReservationRepository,
+    private val authManager: AuthManager
 ) : ViewModel() {
 
     private val _boxes = MutableStateFlow<List<MysteryBox>>(emptyList())
@@ -88,7 +91,13 @@ class BoxViewModel(
             _reservationState.value = ReservationState.Loading
             when (val result = reservationRepository.createReservation(box)) {
                 is Result.Success -> _reservationState.value = ReservationState.Success
-                is Result.Error -> _reservationState.value = ReservationState.Error(result.error.toMessage())
+                is Result.Error -> {
+                    // Check if session was cleared due to auth failure
+                    if (result.error is ApiError.AuthenticationError) {
+                        authManager.checkAndUpdateAuthState()
+                    }
+                    _reservationState.value = ReservationState.Error(result.error.toMessage())
+                }
             }
         }
     }

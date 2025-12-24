@@ -42,9 +42,9 @@ val viewModelModule = module {
     viewModel { LoginViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get()) }
     viewModel { ProfileViewModel(get()) }
-    viewModel { BoxViewModel(get(), get()) }
+    viewModel { BoxViewModel(get(), get(), get()) }
     viewModel { MerchantViewModel(get(), get()) }
-    viewModelOf(::ReservationViewModel)
+    viewModel { ReservationViewModel(get(), get()) }
 }
 
 val appModules = listOf(

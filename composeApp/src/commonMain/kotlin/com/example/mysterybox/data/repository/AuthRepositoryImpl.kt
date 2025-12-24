@@ -57,17 +57,61 @@ class AuthRepositoryImpl(
     override suspend fun refreshToken(): Result<AuthSession> {
         val refreshToken = tokenManager.getRefreshToken()
             ?: return Result.Error(ApiError.AuthenticationError("No refresh token available"))
-        
-        // This would need to be implemented in the API service
-        return Result.Error(ApiError.NotImplemented("Token refresh not implemented"))
+
+        return when (val result = apiService.refreshToken(refreshToken)) {
+            is Result.Success -> {
+                val response = result.data
+                if (response.success && response.accessToken != null && response.refreshToken != null) {
+                    val currentUser = tokenManager.getCurrentUser()
+                        ?: return Result.Error(ApiError.AuthenticationError("No user data available"))
+
+                    // Save new tokens
+                    tokenManager.saveUserSession(
+                        response.accessToken,
+                        response.refreshToken,
+                        currentUser
+                    )
+
+                    Result.Success(
+                        AuthSession(
+                            accessToken = response.accessToken,
+                            refreshToken = response.refreshToken,
+                            expiresIn = response.expiresIn ?: 0,
+                            user = currentUser
+                        )
+                    )
+                } else {
+                    val error = response.error ?: "Token refresh failed"
+                    Result.Error(ApiError.AuthenticationError(error))
+                }
+            }
+            is Result.Error -> result
+        }
     }
 
     override suspend fun getCurrentUser(): Result<User> {
-        return if (tokenManager.isUserAuthenticated()) {
-            // In a real implementation, you'd decode the JWT or call an API
-            Result.Error(ApiError.NotImplemented("getCurrentUser not implemented - needs JWT decode or API call"))
-        } else {
-            Result.Error(ApiError.AuthenticationError("Not authenticated"))
+        if (!tokenManager.isUserAuthenticated()) {
+            return Result.Error(ApiError.AuthenticationError("Not authenticated"))
+        }
+
+        return when (val result = apiService.getCurrentUser()) {
+            is Result.Success -> {
+                val response = result.data
+                if (response.success && response.user != null) {
+                    val user = response.user.toDomain()
+                    // Update stored user data
+                    val accessToken = tokenManager.getAccessToken()
+                    val refreshToken = tokenManager.getRefreshToken()
+                    if (accessToken != null && refreshToken != null) {
+                        tokenManager.saveUserSession(accessToken, refreshToken, user)
+                    }
+                    Result.Success(user)
+                } else {
+                    val error = response.error ?: "Failed to get user info"
+                    Result.Error(ApiError.AuthenticationError(error))
+                }
+            }
+            is Result.Error -> result
         }
     }
 
