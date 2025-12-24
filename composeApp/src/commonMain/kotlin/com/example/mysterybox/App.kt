@@ -152,7 +152,6 @@ private fun AppContent() {
                         navController.navigate(Home) {
                             popUpTo(Welcome) { inclusive = true }
                         }
-
                     }
                 )
             }

@@ -1,6 +1,7 @@
 package com.example.mysterybox.ui.viewmodel
 
 import app.cash.turbine.test
+import com.example.mysterybox.data.auth.AuthManager
 import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.BoxStatus
 import com.example.mysterybox.data.model.MysteryBox
@@ -21,6 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import io.mockk.mockk
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BoxViewModelTest {
@@ -46,10 +48,10 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxesResult = Result.Success(boxes))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.boxes.test {
+        viewModel.filteredBoxes.test {
             val result = awaitItem()
             assertEquals(2, result.size)
             assertEquals("Box 1", result[0].name)
@@ -65,10 +67,10 @@ class BoxViewModelTest {
         )
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.boxes.test {
+        viewModel.filteredBoxes.test {
             val result = awaitItem()
             assertTrue(result.isEmpty())
             cancelAndIgnoreRemainingEvents()
@@ -80,7 +82,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository()
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setFilter(BoxFilter.SOLD_OUT)
@@ -101,7 +103,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxesResult = Result.Success(boxes))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setFilter(BoxFilter.AVAILABLE)
@@ -129,7 +131,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxesResult = Result.Success(boxes))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setFilter(BoxFilter.SOLD_OUT)
@@ -157,7 +159,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxesResult = Result.Success(boxes))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setFilter(BoxFilter.ALL)
@@ -180,7 +182,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxByIdResult = Result.Success(box))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadBoxDetail("detail-box")
@@ -201,7 +203,7 @@ class BoxViewModelTest {
         )
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadBoxDetail("nonexistent")
@@ -219,7 +221,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository(getBoxByIdResult = Result.Success(box))
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadBoxDetail("box-1")
@@ -241,7 +243,7 @@ class BoxViewModelTest {
             createReservationResult = Result.Success(reservation)
         )
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.createReservation(box)
@@ -262,7 +264,7 @@ class BoxViewModelTest {
             createReservationResult = Result.Error(ApiError.AuthenticationError("Not logged in"))
         )
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.createReservation(box)
@@ -285,7 +287,7 @@ class BoxViewModelTest {
             createReservationResult = Result.Success(reservation)
         )
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.createReservation(box)
@@ -303,7 +305,7 @@ class BoxViewModelTest {
         val fakeBoxRepo = FakeBoxRepository()
         val fakeReservationRepo = FakeReservationRepository()
 
-        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo)
+        val viewModel = BoxViewModel(fakeBoxRepo, fakeReservationRepo, mockk<AuthManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.reservationState.test {

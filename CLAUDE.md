@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ IMPORTANT: Test After Every Change
+
+**CRITICAL RULE**: After making any code changes, you MUST run the unit tests to ensure nothing is broken:
+
+```shell
+./gradlew :composeApp:testDebugUnitTest
+```
+
+- If tests fail, fix them immediately before proceeding
+- Update tests when changing APIs or interfaces
+- Never commit code with failing tests
+- Tests are not optional - they ensure code quality and catch regressions
+
 ## Development Commands
 
 ### Build & Run

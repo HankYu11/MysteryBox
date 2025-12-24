@@ -13,8 +13,10 @@ import com.example.mysterybox.data.model.MerchantOrderStatus
 import com.example.mysterybox.data.model.MerchantOrderSummary
 import com.example.mysterybox.data.model.MysteryBox
 import com.example.mysterybox.data.model.Result
+import com.example.mysterybox.data.network.TokenManager
 import com.example.mysterybox.data.repository.MerchantRepository
 import com.example.mysterybox.testutil.TestFixtures
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -47,7 +49,7 @@ class MerchantViewModelTest {
     @Test
     fun `initial uiState is Idle when not logged in`() = runTest {
         val fakeRepo = FakeMerchantRepository()
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.uiState.test {
@@ -60,7 +62,7 @@ class MerchantViewModelTest {
     fun `initial uiState is LoggedIn when merchant exists`() = runTest {
         val merchant = TestFixtures.createMerchant(storeName = "Existing Store")
         val fakeRepo = FakeMerchantRepository(currentMerchant = merchant)
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.uiState.test {
@@ -77,7 +79,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             loginResult = Result.Success(merchant)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.login("test@store.com", "password")
@@ -96,7 +98,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             loginResult = Result.Error(ApiError.AuthenticationError("Invalid credentials"))
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.login("wrong@email.com", "wrong")
@@ -114,7 +116,7 @@ class MerchantViewModelTest {
     fun `logout sets uiState to Idle`() = runTest {
         val merchant = TestFixtures.createMerchant()
         val fakeRepo = FakeMerchantRepository(currentMerchant = merchant)
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.logout()
@@ -133,7 +135,7 @@ class MerchantViewModelTest {
             currentMerchant = merchant,
             getMerchantBoxesResult = Result.Success(boxes)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.logout()
@@ -150,7 +152,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             createBoxResult = Result.Success(box)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         val request = CreateBoxRequest(
@@ -178,7 +180,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             createBoxResult = Result.Error(ApiError.ValidationError("Invalid data"))
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         val request = CreateBoxRequest(
@@ -206,7 +208,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             createBoxResult = Result.Success(box)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         val request = CreateBoxRequest(
@@ -228,7 +230,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             loginResult = Result.Error(ApiError.NetworkError("Failed"))
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.login("test@test.com", "password")
@@ -264,7 +266,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             getDashboardResult = Result.Success(dashboard)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadDashboard()
@@ -283,7 +285,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             getDashboardResult = Result.Error(ApiError.NetworkError("Connection failed"))
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadDashboard()
@@ -300,7 +302,7 @@ class MerchantViewModelTest {
     @Test
     fun `setSelectedTab updates selectedTab`() = runTest {
         val fakeRepo = FakeMerchantRepository()
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setSelectedTab(OrderTab.COMPLETED)
@@ -315,7 +317,7 @@ class MerchantViewModelTest {
     @Test
     fun `setSearchQuery updates searchQuery`() = runTest {
         val fakeRepo = FakeMerchantRepository()
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setSearchQuery("test query")
@@ -353,7 +355,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             getOrdersResult = Result.Success(orders)
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.loadOrders()
@@ -373,7 +375,7 @@ class MerchantViewModelTest {
             verifyOrderResult = Result.Success(Unit),
             getOrdersResult = Result.Success(emptyList())
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.verifyOrder("order-1")
@@ -391,7 +393,7 @@ class MerchantViewModelTest {
         val fakeRepo = FakeMerchantRepository(
             verifyOrderResult = Result.Error(ApiError.NotFoundError("Order not found"))
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.verifyOrder("invalid-order")
@@ -411,7 +413,7 @@ class MerchantViewModelTest {
             cancelOrderResult = Result.Success(Unit),
             getOrdersResult = Result.Success(emptyList())
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.cancelOrder("order-1")
@@ -430,7 +432,7 @@ class MerchantViewModelTest {
             verifyOrderResult = Result.Success(Unit),
             getOrdersResult = Result.Success(emptyList())
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.verifyOrder("order-1")
@@ -446,7 +448,7 @@ class MerchantViewModelTest {
     @Test
     fun `isLoggedIn returns false when not authenticated`() = runTest {
         val fakeRepo = FakeMerchantRepository(isLoggedInResult = false)
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
 
         assertFalse(viewModel.isLoggedIn())
     }
@@ -458,7 +460,7 @@ class MerchantViewModelTest {
             currentMerchant = merchant,
             isLoggedInResult = true
         )
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
 
         assertTrue(viewModel.isLoggedIn())
     }
@@ -466,7 +468,7 @@ class MerchantViewModelTest {
     @Test
     fun `getCurrentMerchant returns null when not logged in`() = runTest {
         val fakeRepo = FakeMerchantRepository()
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
 
         assertNull(viewModel.getCurrentMerchant())
     }
@@ -475,7 +477,7 @@ class MerchantViewModelTest {
     fun `getCurrentMerchant returns merchant when logged in`() = runTest {
         val merchant = TestFixtures.createMerchant(storeName = "My Store")
         val fakeRepo = FakeMerchantRepository(currentMerchant = merchant)
-        val viewModel = MerchantViewModel(fakeRepo)
+        val viewModel = MerchantViewModel(fakeRepo, mockk<TokenManager>(relaxed = true))
 
         assertEquals("My Store", viewModel.getCurrentMerchant()?.storeName)
     }
@@ -490,8 +492,7 @@ private class FakeMerchantRepository(
     private val getDashboardResult: Result<MerchantDashboard> = Result.Error(ApiError.UnknownError),
     private val getOrdersResult: Result<List<MerchantOrder>> = Result.Success(emptyList()),
     private val verifyOrderResult: Result<Unit> = Result.Success(Unit),
-    private val cancelOrderResult: Result<Unit> = Result.Success(Unit),
-    private val isLoggedInResult: Boolean = currentMerchant != null
+    private val cancelOrderResult: Result<Unit> = Result.Success(Unit)
 ) : MerchantRepository {
 
     override suspend fun login(request: MerchantLoginRequest): Result<Merchant> {
@@ -502,13 +503,13 @@ private class FakeMerchantRepository(
         }
     }
 
-    override fun logout() {
+    override suspend fun logout(): Result<Unit> {
         currentMerchant = null
+        return Result.Success(Unit)
     }
 
-    override fun getCurrentMerchant(): Merchant? = currentMerchant
-
-    override fun isLoggedIn(): Boolean = isLoggedInResult
+    override suspend fun getCurrentMerchant(): Result<Merchant> =
+        currentMerchant?.let { Result.Success(it) } ?: Result.Error(ApiError.AuthenticationError("Not logged in"))
 
     override suspend fun createBox(request: CreateBoxRequest): Result<MysteryBox> = createBoxResult
 
