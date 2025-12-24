@@ -46,6 +46,7 @@ class AuthManager(
                         _authState.value = AuthState.Idle
                     }
                 }
+
                 is Result.Error -> {
                     // Token verification failed (refresh also failed)
                     _authState.value = AuthState.Idle
@@ -109,6 +110,7 @@ class AuthManager(
                     _authState.value = AuthState.Idle
                 }
             }
+
             is Result.Error -> {
                 // Error getting session, clear auth state
                 _authState.value = AuthState.Idle

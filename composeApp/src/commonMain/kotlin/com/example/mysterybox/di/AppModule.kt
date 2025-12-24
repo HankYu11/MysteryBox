@@ -2,7 +2,6 @@ package com.example.mysterybox.di
 
 import com.example.mysterybox.data.auth.AuthManager
 import com.example.mysterybox.data.network.MysteryBoxApiService
-import com.example.mysterybox.data.network.TokenManager
 import com.example.mysterybox.data.network.createHttpClient
 import com.example.mysterybox.data.repository.AuthRepository
 import com.example.mysterybox.data.repository.AuthRepositoryImpl
@@ -18,17 +17,12 @@ import com.example.mysterybox.ui.viewmodel.MerchantViewModel
 import com.example.mysterybox.ui.viewmodel.ProfileViewModel
 import com.example.mysterybox.ui.viewmodel.ReservationViewModel
 import com.example.mysterybox.ui.viewmodel.WelcomeViewModel
-import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.viewModel
-import org.koin.core.module.dsl.viewModelOf
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val networkModule = module {
-    single { createHttpClient() }
-    single { TokenManager(get()) }
+    single { createHttpClient(get(), get()) }
     single { AuthManager(get()) }
-    single { MysteryBoxApiService(get(), get()) }
+    single { MysteryBoxApiService(get()) }
 }
 
 val repositoryModule = module {
