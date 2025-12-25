@@ -100,7 +100,12 @@ fun createHttpClient(
                 }
 
                 sendWithoutRequest { request ->
-                    !request.url.pathSegments.any { it.contains("auth") }
+                    // Don't send token for public auth endpoints (login/verify/refresh)
+                    // But DO send for protected endpoints like /api/auth/me, /api/auth/logout
+                    val path = request.url.toString()
+                    !path.contains("/auth/line") &&
+                    !path.contains("/auth/refresh") &&
+                    !path.contains("/auth/merchant/login")
                 }
             }
         }
