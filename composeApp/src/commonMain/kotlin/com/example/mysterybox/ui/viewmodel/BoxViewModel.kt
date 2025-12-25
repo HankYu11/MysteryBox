@@ -55,6 +55,10 @@ class BoxViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    init {
+        loadBoxes()
+    }
+
     fun loadBoxes() {
         viewModelScope.launch {
             _isRefreshing.value = true

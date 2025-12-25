@@ -8,23 +8,41 @@ import com.example.mysterybox.data.model.User
 import com.example.mysterybox.data.repository.AuthRepository
 import com.example.mysterybox.data.storage.MockTokenStorage
 import com.example.mysterybox.ui.state.AuthState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthManagerTest {
 
+    private val testDispatcher = StandardTestDispatcher()
     private val json = Json { ignoreUnknownKeys = true }
     private val testUser = User(
         id = "user123",
         displayName = "Test User",
-        pictureUrl = "https://example.com/pic.jpg",
-        statusMessage = "Hello!"
+        pictureUrl = "https://example.com/pic.jpg"
     )
+
+    @BeforeTest
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private fun createAuthManager(
         tokenStorage: MockTokenStorage = MockTokenStorage(),
@@ -38,10 +56,12 @@ class AuthManagerTest {
     @Test
     fun `authState emits Loading initially`() = runTest {
         val authManager = createAuthManager()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         authManager.authState.test {
             val state = awaitItem()
             assertIs<AuthState.Loading>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -49,11 +69,13 @@ class AuthManagerTest {
     fun `authState emits Unauthenticated when no tokens`() = runTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         authManager.authState.test {
             skipItems(1) // Skip Loading
             val state = awaitItem()
             assertIs<AuthState.Unauthenticated>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -62,18 +84,19 @@ class AuthManagerTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
 
+        // Save both token and user data
+        tokenStorage.saveTokens("access123", "refresh456")
+        tokenStorage.saveUserData(json.encodeToString(testUser))
+        testDispatcher.scheduler.advanceUntilIdle()
+
         authManager.authState.test {
-            skipItems(1) // Skip Loading
-
-            // Save both token and user data
-            tokenStorage.saveTokens("access123", "refresh456")
-            tokenStorage.saveUserData(json.encodeToString(testUser))
-
+            skipItems(1)
             val state = awaitItem()
             assertIs<AuthState.Authenticated>(state)
             assertEquals(testUser, state.user)
             assertEquals("user123", state.user.id)
             assertEquals("Test User", state.user.displayName)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -82,14 +105,15 @@ class AuthManagerTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
 
+        // Save only token, no user data
+        tokenStorage.saveTokens("access123", "refresh456")
+        testDispatcher.scheduler.advanceUntilIdle()
+
         authManager.authState.test {
             skipItems(1) // Skip Loading
-
-            // Save only token, no user data
-            tokenStorage.saveTokens("access123", "refresh456")
-
             val state = awaitItem()
             assertIs<AuthState.Unauthenticated>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -98,14 +122,15 @@ class AuthManagerTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
 
+        // Save only user data, no token
+        tokenStorage.saveUserData(json.encodeToString(testUser))
+        testDispatcher.scheduler.advanceUntilIdle()
+
         authManager.authState.test {
             skipItems(1) // Skip Loading
-
-            // Save only user data, no token
-            tokenStorage.saveUserData(json.encodeToString(testUser))
-
             val state = awaitItem()
             assertIs<AuthState.Unauthenticated>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -114,15 +139,16 @@ class AuthManagerTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
 
+        // Save token and invalid JSON
+        tokenStorage.saveTokens("access123", "refresh456")
+        tokenStorage.saveUserData("invalid json {{{")
+        testDispatcher.scheduler.advanceUntilIdle()
+
         authManager.authState.test {
             skipItems(1) // Skip Loading
-
-            // Save token and invalid JSON
-            tokenStorage.saveTokens("access123", "refresh456")
-            tokenStorage.saveUserData("invalid json {{{")
-
             val state = awaitItem()
             assertIs<AuthState.Unauthenticated>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -131,18 +157,22 @@ class AuthManagerTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
 
-        authManager.authState.test {
-            skipItems(1) // Skip Loading
+        // Set authenticated state
+        tokenStorage.saveTokens("access123", "refresh456")
+        tokenStorage.saveUserData(json.encodeToString(testUser))
+        testDispatcher.scheduler.advanceUntilIdle()
 
-            // Set authenticated state
-            tokenStorage.saveTokens("access123", "refresh456")
-            tokenStorage.saveUserData(json.encodeToString(testUser))
-            assertIs<AuthState.Authenticated>(awaitItem())
+        authManager.authState.test {
+            skipItems(1) // Skip initial state
+            assertIs<AuthState.Authenticated>(awaitItem()) // Should be authenticated
 
             // Clear tokens
             tokenStorage.clearTokens()
+            testDispatcher.scheduler.advanceUntilIdle()
+
             val state = awaitItem()
             assertIs<AuthState.Unauthenticated>(state)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -159,6 +189,7 @@ class AuthManagerTest {
         val authManager = createAuthManager(tokenStorage, fakeRepo)
 
         authManager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify getCurrentUser was called
         assertEquals(1, fakeRepo.getCurrentUserCallCount)
@@ -171,6 +202,7 @@ class AuthManagerTest {
         val authManager = createAuthManager(tokenStorage, fakeRepo)
 
         authManager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify no repository calls were made
         assertEquals(0, fakeRepo.getCurrentUserCallCount)
@@ -184,14 +216,15 @@ class AuthManagerTest {
 
         val fakeRepo = FakeAuthRepository(
             getCurrentUserResult = Result.Error(ApiError.AuthenticationError("Invalid token")),
-            refreshTokenResult = Result.Success(AuthSession("new_access", "new_refresh"))
+            refreshTokenResult = Result.Success(AuthSession("new_access", "new_refresh", 3600, testUser))
         )
         val authManager = createAuthManager(tokenStorage, fakeRepo)
 
         authManager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        // Verify refresh was attempted
-        assertEquals(1, fakeRepo.getCurrentUserCallCount)
+        // Verify refresh was attempted and getCurrentUser called again after refresh
+        assertEquals(2, fakeRepo.getCurrentUserCallCount) // Called twice: initial + after refresh
         assertEquals(1, fakeRepo.refreshTokenCallCount)
     }
 
@@ -207,6 +240,7 @@ class AuthManagerTest {
         val authManager = createAuthManager(tokenStorage, fakeRepo)
 
         authManager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify tokens were cleared
         assertNull(tokenStorage.getAccessToken())
@@ -252,6 +286,7 @@ class AuthManagerTest {
         tokenStorage.saveUserData(json.encodeToString(testUser))
 
         val authManager = createAuthManager(tokenStorage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Wait for auth state to update
         authManager.authState.test {
@@ -260,12 +295,14 @@ class AuthManagerTest {
 
             val user = authManager.getCurrentUser()
             assertEquals(testUser, user)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `getCurrentUser returns null when loading`() = runTest {
         val authManager = createAuthManager()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Check immediately (should be Loading)
         val user = authManager.getCurrentUser()
@@ -276,6 +313,7 @@ class AuthManagerTest {
     fun `getCurrentUser returns null when unauthenticated`() = runTest {
         val tokenStorage = MockTokenStorage()
         val authManager = createAuthManager(tokenStorage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         authManager.authState.test {
             skipItems(1) // Skip Loading
@@ -283,6 +321,7 @@ class AuthManagerTest {
 
             val user = authManager.getCurrentUser()
             assertNull(user)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 }
@@ -304,22 +343,26 @@ private class FakeAuthRepository(
     var logoutCallCount = 0
         private set
 
-    override suspend fun loginWithLineToken(accessToken: String): Result<User> {
+    override suspend fun loginWithLineToken(accessToken: String): Result<AuthSession> {
         error("Not implemented in fake")
     }
 
     override suspend fun getCurrentUser(): Result<User> {
         getCurrentUserCallCount++
-        return getCurrentUserResult ?: Result.Error(ApiError.UnknownError("Not configured"))
+        return getCurrentUserResult ?: Result.Error(ApiError.UnknownError)
     }
 
     override suspend fun refreshToken(): Result<AuthSession> {
         refreshTokenCallCount++
-        return refreshTokenResult ?: Result.Error(ApiError.UnknownError("Not configured"))
+        return refreshTokenResult ?: Result.Error(ApiError.UnknownError)
     }
 
     override suspend fun logout(): Result<Unit> {
         logoutCallCount++
         return logoutResult ?: Result.Success(Unit)
+    }
+
+    override suspend fun getCurrentSession(): Result<AuthSession?> {
+        return Result.Success(null)
     }
 }
