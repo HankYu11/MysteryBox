@@ -31,27 +31,40 @@ For detailed architecture documentation, see **[CLAUDE.md](CLAUDE.md)**.
 
 ```
 composeApp/src/
-├── commonMain/          # Shared KMP code
+├── commonMain/              # Shared KMP code
+│   ├── auth/                # LINE auth utilities
 │   ├── data/
-│   │   ├── auth/        # AuthManager - global auth state holder
-│   │   ├── dto/         # Network DTOs with domain mapping
-│   │   ├── model/       # Domain models (User, MysteryBox, Result, ApiError)
-│   │   ├── network/     # Ktor HTTP client, API service
-│   │   ├── repository/  # Repository interfaces & implementations
-│   │   └── storage/     # TokenStorage interface & DataStore impl
-│   ├── di/              # Koin dependency injection modules
-│   └── ui/
-│       ├── navigation/  # Type-safe navigation routes
-│       ├── screens/     # Stateless composable screens
-│       ├── state/       # UI state classes (AuthState, etc.)
-│       ├── theme/       # Material3 theming
-│       └── viewmodel/   # Screen-specific ViewModels
-├── androidMain/         # Android-specific implementations
-│   ├── auth/            # LINE SDK integration
-│   └── data/storage/    # DataStore with FBE encryption
-└── iosMain/             # iOS-specific implementations
-    ├── auth/            # Browser-based OAuth flow
-    └── data/storage/    # Keychain secure storage
+│   │   ├── auth/            # AuthManager - global auth state holder
+│   │   ├── dto/             # Network DTOs with domain mapping
+│   │   ├── model/           # Domain models (User, MysteryBox, Result, ApiError)
+│   │   ├── network/         # Ktor HTTP client, API service
+│   │   ├── repository/      # Repository interfaces & implementations
+│   │   └── storage/         # TokenStorage interface & DataStore impl
+│   ├── di/                  # Koin dependency injection modules
+│   ├── ui/
+│   │   ├── navigation/      # Type-safe navigation routes
+│   │   ├── screens/         # Stateless composable screens
+│   │   ├── state/           # UI state classes (AuthState, etc.)
+│   │   ├── theme/           # Material3 theming
+│   │   ├── utils/           # UI helper functions
+│   │   └── viewmodel/       # Screen-specific ViewModels
+│   └── utils/               # Common utilities
+├── androidMain/             # Android-specific implementations
+│   ├── auth/                # LINE SDK integration
+│   ├── data/
+│   │   ├── network/         # OkHttp engine factory
+│   │   └── storage/         # DataStore with FBE encryption
+│   ├── di/                  # Android platform module
+│   ├── ui/theme/            # Android theme configuration
+│   └── utils/               # Android utilities
+└── iosMain/                 # iOS-specific implementations
+    ├── auth/                # Browser-based OAuth flow
+    ├── data/
+    │   ├── network/         # Darwin engine factory
+    │   └── storage/         # Keychain secure storage
+    ├── di/                  # iOS platform module
+    ├── ui/theme/            # iOS theme configuration
+    └── utils/               # iOS utilities
 ```
 
 ### Key Architectural Patterns
