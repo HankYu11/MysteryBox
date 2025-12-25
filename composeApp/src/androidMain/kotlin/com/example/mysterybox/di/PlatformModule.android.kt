@@ -1,10 +1,11 @@
 package com.example.mysterybox.di
 
-import com.example.mysterybox.data.storage.AndroidTokenStorage
+import com.example.mysterybox.data.storage.DatastoreTokenStorage
 import com.example.mysterybox.data.storage.TokenStorage
-import org.koin.android.ext.koin.androidContext
+import com.example.mysterybox.data.storage.createDataStore
 import org.koin.dsl.module
 
 actual val platformModule = module {
-    single<TokenStorage> { AndroidTokenStorage(androidContext()) }
+    single { createDataStore() }
+    single<TokenStorage> { DatastoreTokenStorage(get()) }
 }
