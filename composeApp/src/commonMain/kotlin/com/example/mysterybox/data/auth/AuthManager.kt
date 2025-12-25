@@ -17,11 +17,14 @@ import kotlinx.serialization.json.Json
  * AuthManager serves as the single source of truth for authentication state.
  * It reactively combines token and user data from TokenStorage to provide
  * app-wide authentication state that can be observed by ViewModels and UI.
+ *
+ * @param scope CoroutineScope for managing reactive state flows, should be application-scoped
  */
 class AuthManager(
     private val tokenStorage: TokenStorage,
     private val authRepository: AuthRepository,
-    private val json: Json
+    private val json: Json,
+    scope: CoroutineScope
 ) {
 
     /**
@@ -46,7 +49,7 @@ class AuthManager(
                 AuthState.Unauthenticated
             }
         }.stateIn(
-            scope = CoroutineScope(Dispatchers.Main),
+            scope = scope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = AuthState.Loading
         )
@@ -71,7 +74,16 @@ class AuthManager(
                     when (val refreshResult = authRepository.refreshToken()) {
                         is Result.Success -> {
                             // Token refreshed, try getting user again
-                            authRepository.getCurrentUser()
+                            when (val userResult = authRepository.getCurrentUser()) {
+                                is Result.Success -> {
+                                    // User data fetched successfully after refresh
+                                    // AuthState will update reactively via userDataFlow
+                                }
+                                is Result.Error -> {
+                                    // Even after refresh, couldn't get user data - clear tokens
+                                    tokenStorage.clearTokens()
+                                }
+                            }
                         }
                         is Result.Error -> {
                             // Refresh failed, clear invalid tokens

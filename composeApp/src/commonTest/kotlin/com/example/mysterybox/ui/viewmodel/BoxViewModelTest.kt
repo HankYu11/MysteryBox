@@ -14,8 +14,10 @@ import com.example.mysterybox.data.repository.BoxRepository
 import com.example.mysterybox.data.repository.ReservationRepository
 import com.example.mysterybox.data.storage.MockTokenStorage
 import com.example.mysterybox.testutil.TestFixtures
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,7 +59,12 @@ class BoxViewModelTest {
             override suspend fun getCurrentSession(): Result<AuthSession?> =
                 Result.Success(null)
         }
-        return AuthManager(MockTokenStorage(), fakeAuthRepo, json)
+        return AuthManager(
+            MockTokenStorage(),
+            fakeAuthRepo,
+            json,
+            CoroutineScope(SupervisorJob() + testDispatcher)
+        )
     }
 
     @Test

@@ -72,4 +72,12 @@ class LoginViewModel(
             }
         }
     }
+
+    /**
+     * Reset the login state back to Idle.
+     * Call this when navigating away from the login screen.
+     */
+    fun resetState() {
+        _loginState.value = LoginUiState.Idle
+    }
 }

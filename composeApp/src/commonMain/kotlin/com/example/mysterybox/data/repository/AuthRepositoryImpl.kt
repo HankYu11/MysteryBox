@@ -35,12 +35,22 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> {
         return try {
-            apiService.logout()
+            val result = apiService.logout()
             tokenStorage.clearTokens()
-            Result.Success(Unit)
+
+            when (result) {
+                is Result.Success -> Result.Success(Unit)
+                is Result.Error -> {
+                    // Local tokens cleared, but backend call failed
+                    // Inform caller of network error for logging/analytics
+                    result
+                }
+            }
         } catch (e: Exception) {
+            // Always clear local tokens even on exception
             tokenStorage.clearTokens()
-            Result.Success(Unit)
+            // Return error to inform caller, but local logout succeeded
+            Result.Error(ApiError.NetworkError("Logout request failed: ${e.message}", e))
         }
     }
 

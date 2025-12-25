@@ -8,8 +8,10 @@ import com.example.mysterybox.data.model.User
 import com.example.mysterybox.data.repository.AuthRepository
 import com.example.mysterybox.data.storage.MockTokenStorage
 import com.example.mysterybox.ui.state.AuthState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -46,9 +48,15 @@ class AuthManagerTest {
 
     private fun createAuthManager(
         tokenStorage: MockTokenStorage = MockTokenStorage(),
-        authRepository: AuthRepository = FakeAuthRepository()
+        authRepository: AuthRepository = FakeAuthRepository(),
+        scope: CoroutineScope = CoroutineScope(SupervisorJob() + testDispatcher)
     ): AuthManager {
-        return AuthManager(tokenStorage, authRepository, json)
+        return AuthManager(
+            tokenStorage = tokenStorage,
+            authRepository = authRepository,
+            json = json,
+            scope = scope
+        )
     }
 
     // AuthState Reactivity Tests

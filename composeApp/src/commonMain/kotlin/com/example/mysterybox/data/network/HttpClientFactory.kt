@@ -35,6 +35,14 @@ private data class RefreshTokenResponse(
 fun createHttpClient(
     tokenStorage: TokenStorage
 ): HttpClient {
+    // Create a persistent internal client for token refresh to avoid resource leak
+    // This client is reused across refresh attempts and doesn't have Auth plugin
+    val refreshClient = HttpClient(engine) {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+    }
+
     return HttpClient(engine) {
         install(ContentNegotiation) {
             json(Json {
@@ -69,19 +77,11 @@ fun createHttpClient(
                     val refreshToken = tokenStorage.getRefreshToken()
                     if (refreshToken != null) {
                         try {
-                            // Create a simple client without Auth to avoid recursion
-                            val refreshClient = HttpClient(engine) {
-                                install(ContentNegotiation) {
-                                    json(Json { ignoreUnknownKeys = true })
-                                }
-                            }
-
+                            // Use persistent refresh client to avoid creating new client each time
                             val response: RefreshTokenResponse = refreshClient.post("${ApiConfig.BASE_URL}/api/auth/refresh") {
                                 contentType(ContentType.Application.Json)
                                 setBody(RefreshTokenRequest(refreshToken))
                             }.body()
-
-                            refreshClient.close()
 
                             if (response.success && response.accessToken != null && response.refreshToken != null) {
                                 tokenStorage.saveTokens(response.accessToken, response.refreshToken)
