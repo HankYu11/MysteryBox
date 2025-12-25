@@ -9,7 +9,7 @@ import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val networkModule = module {
-    single { createHttpClient(get(), get()) }
+    single { createHttpClient(get()) }
     single { MysteryBoxApiService(get()) }
     single { Json { ignoreUnknownKeys = true } }
 }

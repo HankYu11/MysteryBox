@@ -1,8 +1,8 @@
 package com.example.mysterybox.data.network
 
-import com.example.mysterybox.data.repository.AuthRepository
 import com.example.mysterybox.data.storage.TokenStorage
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -11,13 +11,28 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 internal expect val engine: HttpClientEngine
 
+@Serializable
+private data class RefreshTokenRequest(val refreshToken: String)
+
+@Serializable
+private data class RefreshTokenResponse(
+    val success: Boolean,
+    val accessToken: String? = null,
+    val refreshToken: String? = null,
+    val error: String? = null
+)
+
 fun createHttpClient(
-    authRepository: AuthRepository,
     tokenStorage: TokenStorage
 ): HttpClient {
     return HttpClient(engine) {
@@ -51,11 +66,35 @@ fun createHttpClient(
                 }
 
                 refreshTokens {
-                    val result = authRepository.refreshToken()
-                    if (result is com.example.mysterybox.data.model.Result.Success) {
-                        BearerTokens(result.data.accessToken, result.data.refreshToken)
+                    val refreshToken = tokenStorage.getRefreshToken()
+                    if (refreshToken != null) {
+                        try {
+                            // Create a simple client without Auth to avoid recursion
+                            val refreshClient = HttpClient(engine) {
+                                install(ContentNegotiation) {
+                                    json(Json { ignoreUnknownKeys = true })
+                                }
+                            }
+
+                            val response: RefreshTokenResponse = refreshClient.post("${ApiConfig.BASE_URL}/api/auth/refresh") {
+                                contentType(ContentType.Application.Json)
+                                setBody(RefreshTokenRequest(refreshToken))
+                            }.body()
+
+                            refreshClient.close()
+
+                            if (response.success && response.accessToken != null && response.refreshToken != null) {
+                                tokenStorage.saveTokens(response.accessToken, response.refreshToken)
+                                BearerTokens(response.accessToken, response.refreshToken)
+                            } else {
+                                tokenStorage.clearTokens()
+                                null
+                            }
+                        } catch (e: Exception) {
+                            tokenStorage.clearTokens()
+                            null
+                        }
                     } else {
-                        tokenStorage.clearTokens()
                         null
                     }
                 }
