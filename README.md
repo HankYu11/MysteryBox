@@ -14,56 +14,182 @@ A Kotlin Multiplatform mobile app for reducing food waste by connecting users wi
 ## Tech Stack
 
 - **Kotlin Multiplatform** - Shared business logic for Android & iOS
-- **Compose Multiplatform** - Shared UI across platforms
+- **Compose Multiplatform** - Declarative UI across platforms
 - **Koin** - Dependency injection
-- **Ktor** - HTTP client for API calls with platform-specific engines (OkHttp on Android, Darwin on iOS).
-- **Coroutines & Flow** - Async programming and reactive state
+- **Ktor Client** - HTTP networking with platform-specific engines (OkHttp/Darwin)
+- **Ktor Auth Plugin** - Automatic token management and refresh
+- **Coroutines & StateFlow** - Reactive state management
+- **DataStore** (Android) / **Keychain** (iOS) - Secure token storage
 
 ## Architecture
 
-The app follows a modern mobile architecture based on declarative UI and reactive principles.
+This app follows [Android's official architecture guidelines](https://developer.android.com/topic/architecture) with clear separation of concerns and unidirectional data flow (UDF).
+
+For detailed architecture documentation, see **[CLAUDE.md](CLAUDE.md)**.
+
+### Quick Overview
 
 ```
 composeApp/src/
-├── commonMain/          # Shared code
+├── commonMain/          # Shared KMP code
 │   ├── data/
-│   │   ├── auth/        # Authentication logic (Interceptor, Authenticator)
-│   │   ├── model/       # Data classes
-│   │   ├── network/     # Ktor HTTP client
-│   │   └── repository/  # Data access layer
-│   ├── di/              # Koin modules
+│   │   ├── auth/        # AuthManager - global auth state holder
+│   │   ├── dto/         # Network DTOs with domain mapping
+│   │   ├── model/       # Domain models (User, MysteryBox, Result, ApiError)
+│   │   ├── network/     # Ktor HTTP client, API service
+│   │   ├── repository/  # Repository interfaces & implementations
+│   │   └── storage/     # TokenStorage interface & DataStore impl
+│   ├── di/              # Koin dependency injection modules
 │   └── ui/
-│       ├── screens/     # Composable screens
-│       ├── theme/       # Colors, typography
-│       └── viewmodel/   # ViewModels with StateFlow
-├── androidMain/         # Android-specific code
-└── iosMain/             # iOS-specific code
+│       ├── navigation/  # Type-safe navigation routes
+│       ├── screens/     # Stateless composable screens
+│       ├── state/       # UI state classes (AuthState, etc.)
+│       ├── theme/       # Material3 theming
+│       └── viewmodel/   # Screen-specific ViewModels
+├── androidMain/         # Android-specific implementations
+│   ├── auth/            # LINE SDK integration
+│   └── data/storage/    # DataStore with FBE encryption
+└── iosMain/             # iOS-specific implementations
+    ├── auth/            # Browser-based OAuth flow
+    └── data/storage/    # Keychain secure storage
 ```
+
+### Key Architectural Patterns
+
+#### 1. Unidirectional Data Flow (UDF)
+```
+User Action → ViewModel → Repository → Data Source
+                ↓
+          StateFlow<State>
+                ↓
+           UI (Screen)
+```
+
+#### 2. Single Source of Truth
+- **AuthManager**: Global authentication state shared across screens
+- **ViewModels**: Screen-specific UI state (loading, errors, form data)
+- **TokenStorage**: Secure credential persistence
+
+#### 3. Reactive State Management
+- ViewModels expose `StateFlow<T>` for UI observation
+- `AuthManager` combines token and user data flows reactively
+- UI uses `collectAsState()` for automatic recomposition
+
+## Authentication Architecture
+
+### Unified Token Management (Both Platforms)
+
+Both Android and iOS now use **Ktor's Auth Plugin** for consistent token handling:
+
+```kotlin
+HttpClient {
+    install(Auth) {
+        bearer {
+            loadTokens {
+                // Load from secure storage (DataStore/Keychain)
+            }
+
+            refreshTokens {
+                // Automatic refresh on 401
+                // Updates AuthManager reactively
+            }
+
+            sendWithoutRequest {
+                // Skip auth for public endpoints
+            }
+        }
+    }
+}
+```
+
+### Components
+
+#### AuthManager (Shared)
+- **Single source of truth** for authentication state
+- Exposes `StateFlow<AuthState>` (Loading/Authenticated/Unauthenticated)
+- Reactively combines `TokenStorage` flows
+- Shared across all ViewModels
+
+#### Secure Token Storage
+
+**Android** - DataStore with File-Based Encryption:
+- Uses AndroidX DataStore for coroutines-first storage
+- File-Based Encryption (FBE) on Android 7.0+
+- Atomic operations, no race conditions
+- Reactive flows built-in
+
+**iOS** - Keychain Services:
+- Uses iOS Keychain for secure credential storage
+- Hardware-backed encryption via Secure Enclave
+- `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` protection
+- Reactive flow wrappers for consistency
+
+#### Repositories
+All async operations return `Result<T>`:
+- `Result.Success<T>` - Contains data
+- `Result.Error` - Contains typed `ApiError`
+
+Enables clean error handling in ViewModels without exceptions.
 
 ### Authentication Flow
 
-Authentication is managed centrally to ensure robustness and a clean separation of concerns. This architecture handles automatic token injection and background refreshing seamlessly on both Android and iOS.
+1. **Login** (LINE SDK on Android, Web OAuth on iOS)
+   ```
+   User taps login → LINE SDK/Browser → Access Token
+                                            ↓
+   LoginViewModel → AuthRepository.loginWithLineToken()
+                                            ↓
+   Backend verification → Save tokens → Update AuthManager
+                                            ↓
+                          AuthState.Authenticated emitted
+                                            ↓
+                          UI navigates to home
+   ```
 
-#### Android
+2. **Automatic Token Refresh** (Transparent to UI)
+   ```
+   API call returns 401 → Auth Plugin detects → refreshTokens()
+                                                       ↓
+                          AuthRepository.refreshToken() → New tokens
+                                                       ↓
+                          Save to TokenStorage → Update AuthManager
+                                                       ↓
+                          Original request retried → Success
+   ```
 
-On Android, the Ktor client is configured to use the OkHttp engine, enabling advanced features:
+3. **Logout**
+   ```
+   User taps logout → ProfileViewModel.logout()
+                                            ↓
+   AuthRepository.logout() → Backend call + Clear local tokens
+                                            ↓
+                          AuthState.Unauthenticated emitted
+                                            ↓
+                          UI navigates to login
+   ```
 
--   **`AuthManager`**: The single source of truth for authentication state. It exposes a `StateFlow<AuthState>` that the UI layer observes to react to global login/logout events.
--   **`AuthInterceptor` (OkHttp)**: An interceptor that automatically attaches the JWT `Authorization` header to every outgoing Ktor request.
--   **`TokenAuthenticator` (OkHttp)**: When an API call returns a `401 Unauthorized` error (due to an expired token), this authenticator is triggered. It silently calls the refresh token endpoint, saves the new tokens via the repository, updates the `AuthManager`, and automatically retries the original request.
--   **`AuthRepository`**: Handles the underlying API calls for login, logout, and token refresh, as well as persisting the session data locally.
+## Security Features
 
-#### iOS
+- ✅ **Secure token storage** - Keychain (iOS) / DataStore with FBE (Android)
+- ✅ **Automatic token refresh** - Handled transparently by Ktor Auth
+- ✅ **No token logging** - Sensitive data excluded from logs
+- ✅ **Result-based error handling** - No exceptions with sensitive info
+- ✅ **HTTPS enforcement** - Network security config for production
+- ✅ **Bearer token authentication** - Industry-standard OAuth flow
 
-On iOS, which uses Ktor's native Darwin engine, the same behavior is achieved using the built-in `Auth` plugin:
+## Testing
 
--   **`AuthManager`**: Acts as the single source of truth, identical to the Android implementation.
--   **`Auth` Plugin (Ktor)**: This plugin is configured to manage bearer tokens.
-    -   It automatically loads the access token from the `AuthRepository` before each request.
-    -   When a `401 Unauthorized` error occurs, its `refreshTokens` lambda is triggered. This lambda calls the `authRepository.refreshToken()` method, saves the new tokens, updates the `AuthManager`, and allows Ktor to automatically retry the original request.
--   **`AuthRepository`**: The same shared repository handles the underlying API calls for login, logout, and token refresh.
+Run unit tests:
+```shell
+./gradlew :composeApp:testDebugUnitTest
+```
 
-This dual setup ensures that token expiry is handled gracefully in the background on both platforms, providing a consistent and smooth user experience.
+Test coverage includes:
+- AuthManager state reactivity
+- Token refresh flows
+- ViewModel state management
+- Repository error handling
+- Mock implementations with turbine for Flow testing
 
 ## Build & Run
 
@@ -73,13 +199,33 @@ This dual setup ensures that token expiry is handled gracefully in the backgroun
 ```
 
 ### iOS
-Open `iosApp/iosApp.xcodeproj` in Xcode and run, or use the run configuration in Android Studio/Fleet.
+Open `iosApp/iosApp.xcodeproj` in Xcode and run, or use Android Studio run configuration.
+
+### Development Commands
+
+See [CLAUDE.md](CLAUDE.md) for comprehensive development commands and architecture details.
 
 ## Requirements
 
 - Android Studio Hedgehog or later
 - Xcode 15+ (for iOS)
 - JDK 17+
+
+## API Configuration
+
+Backend API configuration in `ApiConfig.kt`:
+- Base URL: Currently local development (192.168.0.59:8080)
+- LINE Channel ID: 2008724728
+
+## Contributing
+
+This project follows Android's [recommended architecture patterns](https://developer.android.com/topic/architecture/recommendations). Please read [CLAUDE.md](CLAUDE.md) before contributing to understand:
+
+- Architecture principles (UDF, SSOT, separation of concerns)
+- ViewModel guidelines (screen-specific state)
+- Repository patterns (Result-based error handling)
+- State management best practices
+- Testing requirements
 
 ## License
 
