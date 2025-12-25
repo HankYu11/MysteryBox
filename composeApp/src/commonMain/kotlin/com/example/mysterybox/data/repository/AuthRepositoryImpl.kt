@@ -1,35 +1,26 @@
 package com.example.mysterybox.data.repository
 
 import com.example.mysterybox.data.dto.toDomain
-import com.example.mysterybox.data.model.ApiError
-import com.example.mysterybox.data.model.AuthSession
-import com.example.mysterybox.data.model.Result
-import com.example.mysterybox.data.model.User
-import com.example.mysterybox.data.network.ApiConfig
+import com.example.mysterybox.data.model.*
 import com.example.mysterybox.data.network.MysteryBoxApiService
-import com.example.mysterybox.data.network.TokenManager
+import com.example.mysterybox.data.storage.TokenStorage
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class AuthRepositoryImpl(
     private val apiService: MysteryBoxApiService,
-    private val tokenManager: TokenManager
+    private val tokenStorage: TokenStorage,
+    private val json: Json
 ) : AuthRepository {
 
     override suspend fun loginWithLineToken(accessToken: String): Result<AuthSession> {
-        // Send LINE access token to backend for verification
         return when (val result = apiService.verifyLineAccessToken(accessToken)) {
             is Result.Success -> {
                 val response = result.data
                 if (response.success && response.session != null) {
-                    // Backend verified the token and created session
                     val session = response.session.toDomain()
-                    
-                    // Save backend's tokens and user data (not LINE's token)
-                    tokenManager.saveUserSession(
-                        response.session.accessToken,
-                        response.session.refreshToken,
-                        session.user
-                    )
-                    
+                    tokenStorage.saveTokens(session.accessToken, session.refreshToken ?: session.accessToken)
+                    tokenStorage.saveUserData(json.encodeToString(session.user))
                     Result.Success(session)
                 } else {
                     val error = response.error ?: "Authentication failed"
@@ -45,52 +36,51 @@ class AuthRepositoryImpl(
     override suspend fun logout(): Result<Unit> {
         return try {
             apiService.logout()
-            tokenManager.clearUserTokens()
+            tokenStorage.clearTokens()
             Result.Success(Unit)
         } catch (e: Exception) {
-            // Logout locally even if server call fails
-            tokenManager.clearUserTokens()
+            tokenStorage.clearTokens()
             Result.Success(Unit)
         }
     }
 
     override suspend fun refreshToken(): Result<AuthSession> {
-        val refreshToken = tokenManager.getRefreshToken()
+        val refreshToken = tokenStorage.getRefreshToken()
             ?: return Result.Error(ApiError.AuthenticationError("No refresh token available"))
 
         return when (val result = apiService.refreshToken(refreshToken)) {
             is Result.Success -> {
                 val response = result.data
                 if (response.success && response.accessToken != null && response.refreshToken != null) {
-                    val currentUser = tokenManager.getCurrentUser()
-                        ?: return Result.Error(ApiError.AuthenticationError("No user data available"))
+                    val userData = tokenStorage.getUserData() ?: return Result.Error(ApiError.AuthenticationError("No user data available"))
+                    val user = json.decodeFromString<User>(userData)
 
-                    // Save new tokens
-                    tokenManager.saveUserSession(
-                        response.accessToken,
-                        response.refreshToken,
-                        currentUser
-                    )
+                    tokenStorage.saveTokens(response.accessToken, response.refreshToken)
 
                     Result.Success(
                         AuthSession(
                             accessToken = response.accessToken,
                             refreshToken = response.refreshToken,
                             expiresIn = response.expiresIn ?: 0,
-                            user = currentUser
+                            user = user
                         )
                     )
                 } else {
+                    tokenStorage.clearTokens() // Clear tokens on refresh failure
                     val error = response.error ?: "Token refresh failed"
                     Result.Error(ApiError.AuthenticationError(error))
                 }
             }
-            is Result.Error -> result
+            is Result.Error -> {
+                tokenStorage.clearTokens() // Clear tokens on refresh failure
+                result
+            }
         }
     }
 
     override suspend fun getCurrentUser(): Result<User> {
-        if (!tokenManager.isUserAuthenticated()) {
+        val accessToken = tokenStorage.getAccessToken()
+        if (accessToken.isNullOrEmpty()) {
             return Result.Error(ApiError.AuthenticationError("Not authenticated"))
         }
 
@@ -99,12 +89,7 @@ class AuthRepositoryImpl(
                 val response = result.data
                 if (response.success && response.user != null) {
                     val user = response.user.toDomain()
-                    // Update stored user data
-                    val accessToken = tokenManager.getAccessToken()
-                    val refreshToken = tokenManager.getRefreshToken()
-                    if (accessToken != null && refreshToken != null) {
-                        tokenManager.saveUserSession(accessToken, refreshToken, user)
-                    }
+                    tokenStorage.saveUserData(json.encodeToString(user))
                     Result.Success(user)
                 } else {
                     val error = response.error ?: "Failed to get user info"
@@ -116,35 +101,21 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun getCurrentSession(): Result<AuthSession?> {
-        return try {
-            if (tokenManager.isUserAuthenticated()) {
-                val user = tokenManager.getCurrentUser()
-                val accessToken = tokenManager.getAccessToken()
+        val accessToken = tokenStorage.getAccessToken()
+        val refreshToken = tokenStorage.getRefreshToken()
+        val userData = tokenStorage.getUserData()
 
-                if (user != null && !accessToken.isNullOrEmpty()) {
-                    Result.Success(
-                        AuthSession(
-                            accessToken = accessToken,
-                            refreshToken = tokenManager.getRefreshToken() ?: "",
-                            expiresIn = 0, // Not tracked in current implementation
-                            user = user
-                        )
-                    )
-                } else {
-                    // Invalid stored data, clear tokens
-                    tokenManager.clearUserTokens()
-                    Result.Success(null)
-                }
-            } else {
-                Result.Success(null)
-            }
-        } catch (e: Exception) {
-            // Error accessing stored data, clear and return null
-            try {
-                tokenManager.clearUserTokens()
-            } catch (clearException: Exception) {
-                // Ignore clear errors
-            }
+        return if (accessToken != null && refreshToken != null && userData != null) {
+            val user = json.decodeFromString<User>(userData)
+            Result.Success(
+                AuthSession(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    expiresIn = 0, // Not tracked
+                    user = user
+                )
+            )
+        } else {
             Result.Success(null)
         }
     }

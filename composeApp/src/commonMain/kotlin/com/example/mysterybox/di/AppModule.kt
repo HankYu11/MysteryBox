@@ -5,6 +5,7 @@ import com.example.mysterybox.data.network.createHttpClient
 import com.example.mysterybox.data.repository.*
 import com.example.mysterybox.ui.viewmodel.*
 import kotlinx.serialization.json.Json
+import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val networkModule = module {

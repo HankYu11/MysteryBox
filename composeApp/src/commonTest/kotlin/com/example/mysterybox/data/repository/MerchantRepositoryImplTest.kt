@@ -4,13 +4,15 @@ import com.example.mysterybox.data.dto.MerchantResponseDto
 import com.example.mysterybox.data.dto.MysteryBoxDto
 import com.example.mysterybox.data.model.ApiError
 import com.example.mysterybox.data.model.Result
-import com.example.mysterybox.data.network.TokenManager
 import com.example.mysterybox.data.storage.MockTokenStorage
 import com.example.mysterybox.testutil.TestFixtures
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -19,7 +21,7 @@ class MerchantRepositoryImplTest {
     @Test
     fun `login returns merchant on success`() = runTest {
         val mockStorage = MockTokenStorage()
-        val tokenManager = TokenManager(mockStorage)
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -32,7 +34,7 @@ class MerchantRepositoryImplTest {
                 )
             )
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         val result = repository.login("test@store.com", "password")
 
@@ -44,7 +46,7 @@ class MerchantRepositoryImplTest {
     @Test
     fun `login saves merchant token`() = runTest {
         val mockStorage = MockTokenStorage()
-        val tokenManager = TokenManager(mockStorage)
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -57,50 +59,52 @@ class MerchantRepositoryImplTest {
                 )
             )
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         repository.login("test@store.com", "password")
 
-        assertEquals("saved-token", tokenManager.getMerchantToken())
-        assertTrue(tokenManager.isMerchantAuthenticated())
+        assertEquals("saved-token", mockStorage.getMerchantToken())
+        assertNotNull(mockStorage.getMerchantToken())
     }
 
     @Test
     fun `login returns error on API failure`() = runTest {
         val mockStorage = MockTokenStorage()
-        val tokenManager = TokenManager(mockStorage)
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Error(ApiError.AuthenticationError("Invalid credentials"))
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         val result = repository.login("wrong@email.com", "wrong")
 
         assertTrue(result is Result.Error)
         assertTrue(result.error is ApiError.AuthenticationError)
-        assertFalse(tokenManager.isMerchantAuthenticated())
+        assertNull(mockStorage.getMerchantToken())
     }
 
     @Test
     fun `logout clears merchant token`() = runTest {
         val mockStorage = MockTokenStorage()
-        val tokenManager = TokenManager(mockStorage)
-        tokenManager.saveMerchantSession("existing-token", TestFixtures.createMerchant())
+        val json = Json { ignoreUnknownKeys = true }
+        val merchant = TestFixtures.createMerchant()
+        mockStorage.saveMerchantToken("existing-token")
+        mockStorage.saveMerchantData(json.encodeToString(merchant))
         val fakeApi = FakeMerchantApiService()
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         repository.logout()
 
-        assertNull(tokenManager.getMerchantToken())
-        assertFalse(tokenManager.isMerchantAuthenticated())
+        assertNull(mockStorage.getMerchantToken())
+        assertNull(mockStorage.getMerchantData())
     }
 
     @Test
     fun `getCurrentMerchant returns error before login`() = runTest {
         val mockStorage = MockTokenStorage()
-        val tokenManager = TokenManager(mockStorage)
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService()
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         val result = repository.getCurrentMerchant()
         assertTrue(result is Result.Error)
@@ -108,7 +112,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `getCurrentMerchant returns merchant after login`() = runTest {
-        val tokenManager = TokenManager(MockTokenStorage())
+        val mockStorage = MockTokenStorage()
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             loginResponse = Result.Success(
                 MerchantResponseDto(
@@ -121,7 +126,7 @@ class MerchantRepositoryImplTest {
                 )
             )
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         repository.login("test@store.com", "password")
 
@@ -132,8 +137,8 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `getMerchantBoxes returns boxes on success`() = runTest {
-        val tokenManager = TokenManager(MockTokenStorage())
-        tokenManager.saveMerchantSession("token", TestFixtures.createMerchant())
+        val mockStorage = MockTokenStorage()
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             getMerchantBoxesResponse = Result.Success(
                 listOf(
@@ -142,7 +147,7 @@ class MerchantRepositoryImplTest {
                 )
             )
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         val result = repository.getMerchantBoxes()
 
@@ -152,12 +157,12 @@ class MerchantRepositoryImplTest {
 
     @Test
     fun `getMerchantBoxes returns error on failure`() = runTest {
-        val tokenManager = TokenManager(MockTokenStorage())
-        tokenManager.saveMerchantSession("token", TestFixtures.createMerchant())
+        val mockStorage = MockTokenStorage()
+        val json = Json { ignoreUnknownKeys = true }
         val fakeApi = FakeMerchantApiService(
             getMerchantBoxesResponse = Result.Error(ApiError.NetworkError("Connection failed"))
         )
-        val repository = TestableMerchantRepository(fakeApi, tokenManager)
+        val repository = TestableMerchantRepository(fakeApi, mockStorage, json)
 
         val result = repository.getMerchantBoxes()
 
@@ -214,7 +219,8 @@ private class FakeMerchantApiService(
  */
 private class TestableMerchantRepository(
     private val fakeApi: FakeMerchantApiService,
-    private val tokenManager: TokenManager
+    private val tokenStorage: MockTokenStorage,
+    private val json: Json
 ) : MerchantRepository {
     private var currentMerchant: com.example.mysterybox.data.model.Merchant? = null
 
@@ -223,10 +229,9 @@ private class TestableMerchantRepository(
             is Result.Success -> {
                 val merchant = result.data.toDomain()
                 currentMerchant = merchant
-                result.data.token?.let {
-                    currentMerchant?.let { merchant ->
-                        tokenManager.saveMerchantSession(it, merchant)
-                    }
+                result.data.token?.let { token ->
+                    tokenStorage.saveMerchantToken(token)
+                    tokenStorage.saveMerchantData(json.encodeToString(merchant))
                 }
                 Result.Success(merchant)
             }
@@ -240,7 +245,7 @@ private class TestableMerchantRepository(
 
     override suspend fun logout(): Result<Unit> {
         currentMerchant = null
-        tokenManager.clearMerchantToken()
+        tokenStorage.clearMerchantToken()
         return Result.Success(Unit)
     }
 

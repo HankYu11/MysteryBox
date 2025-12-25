@@ -12,8 +12,8 @@ class MockTokenStorage : TokenStorage {
     private val _accessToken = MutableStateFlow<String?>(null)
     private val _refreshToken = MutableStateFlow<String?>(null)
     private val _userData = MutableStateFlow<String?>(null)
-    private var merchantToken: String? = null
-    private var merchantData: String? = null
+    private val _merchantToken = MutableStateFlow<String?>(null)
+    private val _merchantData = MutableStateFlow<String?>(null)
 
     // User Authentication - Flows
     override val accessTokenFlow: Flow<String?> = _accessToken.asStateFlow()
@@ -44,19 +44,19 @@ class MockTokenStorage : TokenStorage {
 
     // Merchant Authentication - Methods
     override suspend fun saveMerchantToken(token: String) {
-        merchantToken = token
+        _merchantToken.value = token
     }
 
-    override suspend fun getMerchantToken(): String? = merchantToken
+    override suspend fun getMerchantToken(): String? = _merchantToken.value
 
     override suspend fun saveMerchantData(data: String) {
-        merchantData = data
+        _merchantData.value = data
     }
 
-    override suspend fun getMerchantData(): String? = merchantData
+    override suspend fun getMerchantData(): String? = _merchantData.value
 
     override suspend fun clearMerchantToken() {
-        merchantToken = null
-        merchantData = null
+        _merchantToken.value = null
+        _merchantData.value = null
     }
 }

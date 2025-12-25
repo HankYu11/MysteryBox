@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AndroidTokenStorage(private val context: Context) : TokenStorage {
 
@@ -26,36 +29,49 @@ class AndroidTokenStorage(private val context: Context) : TokenStorage {
         }
     }
 
-    override suspend fun saveUserTokens(accessToken: String, refreshToken: String) {
+    // Reactive flows for token changes
+    private val _accessTokenFlow = MutableStateFlow(sharedPreferences.getString(KEY_USER_ACCESS_TOKEN, null))
+    override val accessTokenFlow: Flow<String?> = _accessTokenFlow.asStateFlow()
+
+    private val _refreshTokenFlow = MutableStateFlow(sharedPreferences.getString(KEY_USER_REFRESH_TOKEN, null))
+    override val refreshTokenFlow: Flow<String?> = _refreshTokenFlow.asStateFlow()
+
+    private val _userDataFlow = MutableStateFlow(sharedPreferences.getString(KEY_USER_DATA, null))
+    override val userDataFlow: Flow<String?> = _userDataFlow.asStateFlow()
+
+    override suspend fun saveTokens(accessToken: String, refreshToken: String) {
         sharedPreferences.edit()
             .putString(KEY_USER_ACCESS_TOKEN, accessToken)
             .putString(KEY_USER_REFRESH_TOKEN, refreshToken)
-            .apply()
+            .commit()
+        _accessTokenFlow.value = accessToken
+        _refreshTokenFlow.value = refreshToken
     }
 
     override suspend fun saveMerchantToken(token: String) {
         sharedPreferences.edit()
             .putString(KEY_MERCHANT_TOKEN, token)
-            .apply()
+            .commit()
     }
 
     override suspend fun saveUserData(userData: String) {
         sharedPreferences.edit()
             .putString(KEY_USER_DATA, userData)
-            .apply()
+            .commit()
+        _userDataFlow.value = userData
     }
 
     override suspend fun saveMerchantData(merchantData: String) {
         sharedPreferences.edit()
             .putString(KEY_MERCHANT_DATA, merchantData)
-            .apply()
+            .commit()
     }
 
-    override suspend fun getUserAccessToken(): String? {
+    override suspend fun getAccessToken(): String? {
         return sharedPreferences.getString(KEY_USER_ACCESS_TOKEN, null)
     }
 
-    override suspend fun getUserRefreshToken(): String? {
+    override suspend fun getRefreshToken(): String? {
         return sharedPreferences.getString(KEY_USER_REFRESH_TOKEN, null)
     }
 
@@ -71,29 +87,22 @@ class AndroidTokenStorage(private val context: Context) : TokenStorage {
         return sharedPreferences.getString(KEY_MERCHANT_DATA, null)
     }
 
-    override suspend fun clearUserTokens() {
+    override suspend fun clearTokens() {
         sharedPreferences.edit()
             .remove(KEY_USER_ACCESS_TOKEN)
             .remove(KEY_USER_REFRESH_TOKEN)
             .remove(KEY_USER_DATA)
-            .apply()
+            .commit()
+        _accessTokenFlow.value = null
+        _refreshTokenFlow.value = null
+        _userDataFlow.value = null
     }
 
     override suspend fun clearMerchantToken() {
         sharedPreferences.edit()
             .remove(KEY_MERCHANT_TOKEN)
             .remove(KEY_MERCHANT_DATA)
-            .apply()
-    }
-
-    override suspend fun clearAllTokens() {
-        sharedPreferences.edit()
-            .remove(KEY_USER_ACCESS_TOKEN)
-            .remove(KEY_USER_REFRESH_TOKEN)
-            .remove(KEY_USER_DATA)
-            .remove(KEY_MERCHANT_TOKEN)
-            .remove(KEY_MERCHANT_DATA)
-            .apply()
+            .commit()
     }
 
     companion object {

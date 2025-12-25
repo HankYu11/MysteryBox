@@ -2,7 +2,6 @@ package com.example.mysterybox.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mysterybox.data.auth.AuthManager
 import com.example.mysterybox.data.model.Result
 import com.example.mysterybox.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +23,10 @@ sealed class LoginUiState {
 /**
  * ViewModel for the Login screen.
  * Manages LINE login flow with screen-specific loading and error states.
- * Updates global AuthManager state upon successful authentication.
+ * The authentication state is updated reactively through the AuthRepository.
  */
 class LoginViewModel(
-    private val authRepository: AuthRepository,
-    private val authManager: AuthManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -61,17 +59,12 @@ class LoginViewModel(
 
     /**
      * Send LINE access token to backend for verification and session creation.
-     * Updates AuthManager with user data on success.
      */
     private suspend fun loginWithLineToken(accessToken: String) {
         when (val result = authRepository.loginWithLineToken(accessToken)) {
             is Result.Success -> {
-                // Update global auth state
-                authManager.setAuthenticated(
-                    user = result.data.user,
-                    accessToken = result.data.accessToken
-                )
-                // Set login screen state to success
+                // The repository handles saving tokens and AuthManager will react.
+                // Just update the UI state for this screen.
                 _loginState.value = LoginUiState.Success
             }
             is Result.Error -> {

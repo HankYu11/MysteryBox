@@ -35,7 +35,7 @@ class AuthStateTest {
             id = "user123",
             displayName = "Test User",
             pictureUrl = "https://example.com/pic.jpg",
-            statusMessage = "Hello!"
+            createdAt = "2024-01-01"
         )
 
         val authState = AuthState.Authenticated(user)
@@ -50,15 +50,13 @@ class AuthStateTest {
         val user1 = User(
             id = "user1",
             displayName = "User One",
-            pictureUrl = null,
-            statusMessage = null
+            pictureUrl = null
         )
 
         val user2 = User(
             id = "user2",
             displayName = "User Two",
-            pictureUrl = null,
-            statusMessage = null
+            pictureUrl = null
         )
 
         val auth1 = AuthState.Authenticated(user1)
@@ -72,8 +70,7 @@ class AuthStateTest {
         val user = User(
             id = "user123",
             displayName = "Test User",
-            pictureUrl = null,
-            statusMessage = null
+            pictureUrl = null
         )
 
         val auth1 = AuthState.Authenticated(user)
@@ -101,8 +98,7 @@ class AuthStateTest {
         val user = User(
             id = "user123",
             displayName = "Test User",
-            pictureUrl = null,
-            statusMessage = null
+            pictureUrl = null
         )
         val state: AuthState = AuthState.Authenticated(user)
 
@@ -134,7 +130,7 @@ class AuthStateTest {
     fun `AuthState subclasses are correctly typed`() {
         val loading: AuthState = AuthState.Loading
         val authenticated: AuthState = AuthState.Authenticated(
-            User("id", "name", null, null)
+            User(id = "id", displayName = "name", pictureUrl = null)
         )
         val unauthenticated: AuthState = AuthState.Unauthenticated
 
@@ -147,7 +143,7 @@ class AuthStateTest {
     fun `Different AuthState types are not equal`() {
         val loading = AuthState.Loading
         val authenticated = AuthState.Authenticated(
-            User("id", "name", null, null)
+            User(id = "id", displayName = "name", pictureUrl = null)
         )
         val unauthenticated = AuthState.Unauthenticated
 
